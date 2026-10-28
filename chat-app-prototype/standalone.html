@@ -1,0 +1,3252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EDEDED">
+<title>聊天</title>
+<style>
+:root{
+  --gray:#EDEDED; --line:#E5E5E5; --text:#191919; --sub:#9B9B9B; --time:#B3B3B3;
+  --green:#07C160; --red:#FA3B30; --ink:#1A1A1A;
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:var(--font);background:#e9ebef;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--text)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit;border:0;outline:none;background:none;min-width:0}
+.hidden{display:none!important}
+.page,.list,.msg-area,.contacts-list,.sheet-body,.profile-scroll,.library-body,.emoji-grid,.card-pick{scrollbar-width:none}
+.page::-webkit-scrollbar,.list::-webkit-scrollbar,.msg-area::-webkit-scrollbar,.contacts-list::-webkit-scrollbar,.sheet-body::-webkit-scrollbar,.profile-scroll::-webkit-scrollbar,.library-body::-webkit-scrollbar,.emoji-grid::-webkit-scrollbar,.card-pick::-webkit-scrollbar{display:none}
+
+/* ---------- 手机外壳 ---------- */
+.phone{width:390px;height:844px;position:relative;border-radius:44px;background:#000;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.28)}
+.screen{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;flex-direction:column;background:var(--gray);overflow:hidden;border-radius:44px}
+
+/* ---------- 状态栏 ---------- */
+.statusbar{height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:14px;font-weight:600;color:#000}
+.sb-left,.sb-right{display:flex;align-items:center;gap:6px}
+.sb-clock{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+.sb-right{gap:5px}
+.sb-right .num{font-size:12.5px;font-weight:500}
+
+/* ---------- 顶部标题栏 ---------- */
+.header{height:44px;flex:0 0 44px;position:relative;display:flex;align-items:center;justify-content:center;background:var(--gray)}
+.title{font-size:17px;font-weight:600;letter-spacing:.4px;font-variant-numeric:tabular-nums}
+.title.live{letter-spacing:.6px}
+.header-actions{position:absolute;right:14px;top:0;height:44px;display:flex;align-items:center;gap:18px}
+.icon-btn{width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:var(--ink);border-radius:50%;transition:transform .15s,opacity .15s}
+.icon-btn:active{transform:scale(.9);opacity:.6}
+.icon-btn svg{width:25px;height:25px;display:block}
+.icon-btn.active{opacity:.55}
+
+/* ---------- 内容区 ---------- */
+.content{flex:1;position:relative;background:var(--gray);overflow:hidden}
+.page{position:absolute;top:0;right:0;bottom:0;left:0;overflow:auto;display:none}
+.page.active{display:block}
+.list{min-height:100%;background:var(--gray)}
+.empty-tip{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;color:#B8B8B8;font-size:13.5px;letter-spacing:.5px}
+
+/* ---------- 会话列表 ---------- */
+.cell{position:relative;display:flex;align-items:center;height:64px;padding:8px 16px;background:#fff}
+.cell::after{content:"";position:absolute;left:76px;right:0;bottom:0;height:1px;background:var(--line)}
+.cell:active{background:#F2F2F2}
+.cell-main{flex:1;min-width:0;margin-left:12px;padding-right:64px}
+.cell-title{font-size:16px;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-sub{margin-top:3px;font-size:13px;line-height:17px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-time{position:absolute;right:16px;top:13px;font-size:11.5px;color:var(--time)}
+
+/* ---------- 头像 ---------- */
+.av{width:48px;height:48px;flex:0 0 auto;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;font-weight:500}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.gav{width:48px;height:48px;flex:0 0 auto;border-radius:6px;overflow:hidden;display:flex;flex-wrap:wrap;background:#D9D9D9}
+.gav>span,.gav>img{width:50%;height:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:500;object-fit:cover}
+.gav-1>span,.gav-1>img{width:100%;height:100%;font-size:19px}
+.gav-2>span,.gav-2>img{width:50%;height:100%}
+
+/* ---------- 底部导航 ---------- */
+.tabbar{flex:0 0 auto;background:#fff;border-top:1px solid var(--line);display:flex;padding-top:5px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;color:#7D7D7D;padding:2px 0 0}
+.tab .tab-ico{position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.tab .tab-ico svg{width:27px;height:27px;display:block}
+.tab span{font-size:10px;line-height:14px;letter-spacing:.3px}
+.tab.active{color:var(--green)}
+.tab .dot{position:absolute;top:1px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--red);border:1.5px solid #fff}
+.home-indicator{flex:0 0 auto;background:#fff;height:20px;display:flex;align-items:flex-start;justify-content:center}
+.home-indicator i{width:134px;height:5px;border-radius:3px;background:#111;opacity:.85}
+
+/* ---------- 加号菜单 ---------- */
+.mask{position:absolute;top:0;right:0;bottom:0;left:0;z-index:30;background:rgba(0,0,0,.06);opacity:0;pointer-events:none;transition:opacity .18s}
+.mask.open{opacity:1;pointer-events:auto}
+.menu{position:absolute;z-index:31;top:94px;right:10px;width:196px;padding:4px 0;background:rgba(48,48,48,.97);border-radius:10px;color:#fff;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);transform-origin:100% 0;transform:scale(.9) translateY(-8px);opacity:0;pointer-events:none;
+  transition:transform .18s cubic-bezier(.2,.8,.3,1),opacity .14s}
+.menu.open{transform:scale(1) translateY(0);opacity:1;pointer-events:auto}
+.menu::before{content:"";position:absolute;top:-6px;right:26px;width:13px;height:13px;background:rgba(48,48,48,.97);transform:rotate(45deg);border-radius:2px}
+.menu-item{width:100%;display:flex;align-items:center;gap:13px;padding:0 15px;height:50px;font-size:15.5px;letter-spacing:.3px;position:relative;text-align:left}
+.menu-item+.menu-item::after{content:"";position:absolute;top:0;left:15px;right:15px;height:1px;background:rgba(255,255,255,.12)}
+.menu-item svg{width:22px;height:22px;flex:0 0 22px;display:block}
+.menu-item:active{background:rgba(255,255,255,.09)}
+
+/* ---------- 底部弹层 ---------- */
+.sheet-mask{position:absolute;top:0;right:0;bottom:0;left:0;z-index:55;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .22s}
+.sheet-mask.open{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:60;max-height:76%;background:#fff;border-radius:16px 16px 0 0;
+  display:flex;flex-direction:column;transform:translateY(100%);transition:transform .26s cubic-bezier(.22,.8,.28,1);
+  padding-bottom:env(safe-area-inset-bottom,0px);overflow:hidden}
+.sheet.open{transform:translateY(0)}
+.sheet:not(.open){visibility:hidden;pointer-events:none}
+.sheet-head{position:relative;flex:0 0 auto;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line)}
+.sheet-title{position:absolute;left:50%;transform:translateX(-50%);font-size:16px;font-weight:600;max-width:55%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link{font-size:15.5px;color:var(--green);padding:6px 2px;z-index:1}
+.link.muted{color:#888}
+.link[disabled]{color:#B9E6C9;cursor:default}
+.sheet-body{flex:1;overflow:auto;overscroll-behavior:contain;padding-bottom:10px}
+.sheet-empty{padding:34px 16px 26px;text-align:center;color:#9B9B9B;font-size:14px;line-height:2}
+.empty-btn{display:inline-block;margin-top:8px;padding:8px 20px;border-radius:6px;background:var(--green);color:#fff;font-size:14px}
+
+/* 选择好友 */
+.pick{position:relative;display:flex;align-items:center;gap:12px;height:56px;padding:8px 16px;background:#fff}
+.pick::after{content:"";position:absolute;left:68px;right:0;bottom:0;height:1px;background:var(--line)}
+.pick:active{background:#F2F2F2}
+.pick .av{width:40px;height:40px;font-size:15px;border-radius:5px}
+.pick-name{flex:1;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.check{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:1.5px solid #D0D0D0;position:relative;transition:background .15s,border-color .15s}
+.check::after{content:"";position:absolute;left:6.5px;top:4.5px;width:7px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg);opacity:0;transition:opacity .15s}
+.pick.selected .check{background:var(--green);border-color:var(--green)}
+.pick.selected .check::after{opacity:1}
+
+/* 好友列表 */
+.friend-row{position:relative;display:flex;align-items:center;gap:12px;height:60px;padding:8px 16px;background:#fff}
+.friend-row::after{content:"";position:absolute;left:68px;right:0;bottom:0;height:1px;background:var(--line)}
+.friend-row:active{background:#F2F2F2}
+.friend-row .av{width:40px;height:40px;font-size:15px;border-radius:5px}
+.friend-name{flex:1;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-edit{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#B0B0B0;border-radius:50%}
+.row-edit svg{width:19px;height:19px;display:block}
+.row-edit:active{background:#F0F0F0;color:#07C160}
+
+/* 编辑好友 */
+.friend-edit{padding:20px 18px 26px}
+.avatar-edit{display:flex;align-items:center;gap:18px}
+.avatar-preview{width:72px;height:72px;flex:0 0 auto;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:500}
+.avatar-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.avatar-tools{flex:1;min-width:0}
+.avatar-label{font-size:13px;color:#9B9B9B;margin-bottom:2px}
+.upload-btn{display:inline-block;font-size:14px;color:var(--green);padding:3px 0;cursor:pointer}
+.swatches{display:flex;flex-wrap:wrap;gap:9px;margin-top:9px}
+.swatch{width:22px;height:22px;border-radius:50%;border:0}
+.swatch.active{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--green)}
+.field{display:flex;align-items:center;gap:10px;margin-top:24px;padding-bottom:11px;border-bottom:1px solid #EEE}
+.field span{width:64px;flex:0 0 64px;font-size:15px;color:#333}
+.field input{flex:1;font-size:15.5px}
+.danger-btn{width:100%;margin-top:28px;padding:13px 0;border-radius:8px;background:#FBFBFB;color:#E64340;font-size:15px}
+.danger-btn:active{background:#F4F4F4}
+
+/* 字卡编辑 */
+.card-edit{padding:16px 18px 26px}
+.card-title-input{width:100%;padding:10px 0;font-size:16px;font-weight:600;border-bottom:1px solid #EEE}
+.card-textarea{width:100%;min-height:120px;margin-top:14px;padding:11px 12px;font-size:15px;line-height:1.55;resize:none;background:#F7F7F7;border-radius:8px}
+
+/* ---------- 整页 ---------- */
+.screen-page{position:absolute;top:44px;left:0;right:0;bottom:20px;z-index:40;display:flex;flex-direction:column;background:var(--gray);
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.25,.8,.3,1);visibility:hidden;pointer-events:none}
+.screen-page.open{transform:translateX(0);visibility:visible;pointer-events:auto}
+.detail-head{position:relative;flex:0 0 46px;height:46px;display:flex;align-items:center;background:var(--gray);border-bottom:1px solid #DEDEDE}
+.detail-back{width:44px;height:46px;flex:0 0 44px;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.detail-back:active{opacity:.5}
+.detail-back svg{width:22px;height:22px;display:block}
+.detail-title{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:16.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.detail-count{font-size:14px;font-weight:400;color:#9B9B9B}
+
+/* 字卡库 */
+.library-body{flex:1;overflow:auto;background:#fff}
+.card-row{position:relative;display:flex;align-items:flex-start;gap:10px;padding:13px 16px;background:#fff}
+.card-row::after{content:"";position:absolute;left:16px;right:0;bottom:0;height:1px;background:var(--line)}
+.card-row:active{background:#F7F7F7}
+.card-main{flex:1;min-width:0}
+.card-title{font-size:15.5px;font-weight:600;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-text{margin-top:3px;font-size:13px;line-height:18px;color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-row .row-edit{margin-top:2px}
+.library-empty{padding:90px 20px;text-align:center;color:#B8B8B8;font-size:14px;line-height:2}
+
+/* 会话详情 */
+.msg-area{flex:1;overflow:auto;padding:12px 12px 20px;background:var(--gray)}
+.sys-tip{text-align:center;font-size:12px;color:#9E9E9E;margin:10px 0 16px}
+.msg{display:flex;align-items:flex-start;gap:8px;margin-bottom:16px}
+.msg.mine{justify-content:flex-end}
+.msg .bubble{max-width:66%;padding:9px 12px;border-radius:5px;background:#95EC69;font-size:15.5px;line-height:1.45;word-break:break-word;white-space:pre-wrap}
+.msg .av{width:38px;height:38px;font-size:14px;border-radius:4px}
+.msg .av.me{background:#B9B9B9}
+.composer{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 10px;background:#F7F7F7;border-top:1px solid #E2E2E2}
+.composer-plus{width:30px;height:30px;flex:0 0 30px;display:flex;align-items:center;justify-content:center;color:#4A4A4A}
+.composer-plus svg{width:25px;height:25px;display:block}
+.msg-input{flex:1;height:34px;padding:0 10px;background:#fff;border-radius:4px;font-size:15px}
+.send-btn{height:30px;padding:0 14px;border-radius:5px;background:var(--green);color:#fff;font-size:14px;flex:0 0 auto}
+.send-btn[disabled]{opacity:.35}
+
+/* ---------- 提示 ---------- */
+.toast{position:absolute;left:50%;bottom:26%;transform:translate(-50%,6px);z-index:120;max-width:70%;padding:9px 16px;border-radius:8px;
+  background:rgba(0,0,0,.78);color:#fff;font-size:13.5px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 开场动画 ---------- */
+.splash{position:absolute;top:0;right:0;bottom:0;left:0;z-index:100;background:#fff;display:flex;align-items:center;justify-content:center;border-radius:44px;transition:opacity .34s ease}
+.splash.hide{opacity:0;pointer-events:none}
+.splash-text{font-size:17px;letter-spacing:6px;color:#C4C4C4;opacity:0;transform:translateY(6px);animation:splashIn .7s cubic-bezier(.2,.8,.2,1) .1s forwards}
+@keyframes splashIn{to{opacity:1;transform:none}}
+.splash-hint{position:absolute;bottom:72px;left:0;right:0;text-align:center;font-size:11.5px;color:#D8D8D8;letter-spacing:3px}
+
+/* ---------- 通讯录 ---------- */
+#page-contacts{overflow:hidden}
+.contacts-list{min-height:100%;height:100%;overflow:auto;background:#fff;padding-bottom:8px}
+.contacts-tool{padding:8px 0 4px;background:#EDEDED}
+.contacts-tool .tool-row{display:flex;align-items:center;height:36px;padding:0 16px;gap:8px;background:#fff;font-size:14px;color:#333}
+.contacts-tool .tool-row+.tool-row{margin-top:1px}
+.group-letter{position:sticky;top:0;z-index:2;height:24px;display:flex;align-items:center;padding:0 16px;background:#EDEDED;font-size:12.5px;color:#8A8A8A}
+.contact-row{position:relative;display:flex;align-items:center;height:56px;padding:6px 16px;background:#fff}
+.contact-row::after{content:"";position:absolute;left:68px;right:0;bottom:0;height:1px;background:var(--line)}
+.contact-row:active{background:#F2F2F2}
+.contact-row .av{width:40px;height:40px;border-radius:5px;font-size:15px}
+.contact-name{flex:1;margin-left:12px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.index-rail{position:absolute;right:2px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;padding:4px 3px;font-size:10.5px;line-height:1.45;color:#6E6E6E;user-select:none}
+.index-rail span{padding:0 2px}
+.index-rail span:active{color:var(--green)}
+
+/* ---------- 好友资料 ---------- */
+.profile-head{background:#EDEDED}
+.profile-head-actions{position:absolute;right:2px;top:0;height:46px;display:flex;align-items:center}
+.profile-scroll{flex:1;overflow:auto;background:var(--gray);padding-bottom:20px}
+.profile-main{display:flex;align-items:center;gap:16px;padding:22px 20px 20px;background:var(--gray)}
+.profile-av{width:68px;height:68px;flex:0 0 68px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:25px;font-weight:500;position:relative}
+.profile-av img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-av::after{content:"更换";position:absolute;left:0;right:0;bottom:0;padding:2px 0;font-size:10px;text-align:center;background:rgba(0,0,0,.35);color:#fff}
+.profile-info{flex:1;min-width:0}
+.profile-name{font-size:20px;font-weight:600;line-height:27px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-region{margin-top:6px;font-size:13.5px;color:#8A8A8A;display:flex;align-items:center;gap:4px;text-align:left}
+.profile-region span{color:#8A8A8A}
+.profile-card{margin:9px 0 0;background:#fff}
+.ps-row{position:relative;display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 18px;font-size:15.5px}
+.ps-row+.ps-row::before{content:"";position:absolute;top:0;left:18px;right:0;height:1px;background:var(--line)}
+.chev{color:#B2B2B2;font-size:17px;line-height:1}
+.ps-value{color:#9B9B9B;font-size:14.5px}
+.moments-strip{display:flex;gap:8px;padding:0 18px 14px}
+.moments-strip i{width:56px;height:56px;border-radius:4px;background:#E7E7E7}
+.moments-strip i:nth-child(2){background:#EFE3D6}
+.moments-strip i:nth-child(3){background:#DCE6EE}
+.moments-strip i:nth-child(4){background:#E4E9DE}
+.video-mini{padding:0 18px 14px}
+.video-mini span{display:block;height:72px;border-radius:5px;background:linear-gradient(120deg,#DDE5EC,#E9E1DA 60%,#E6E9DE)}
+.profile-btns{display:flex;flex-direction:column;gap:1px;margin-top:9px;background:#fff}
+.profile-btns button{display:flex;align-items:center;justify-content:center;gap:8px;height:54px;font-size:16px;color:#111;background:#fff}
+.profile-btns button+button{position:relative}
+.profile-btns button+button::before{content:"";position:absolute;top:0;left:18px;right:18px;height:1px;background:var(--line)}
+.profile-btns button:active{background:#F2F2F2}
+.profile-btns svg{width:21px;height:21px;display:block}
+.profile-btns button:first-child{color:#111}
+
+/* ---------- 设置 / 开关 / 背景 ---------- */
+.setting-row{position:relative;display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 18px;background:#fff;font-size:15.5px}
+.setting-row+.setting-row::before{content:"";position:absolute;top:0;left:18px;right:0;height:1px;background:var(--line)}
+.switch{width:46px;height:27px;flex:0 0 46px;border-radius:14px;background:#DDDDDD;position:relative;transition:background .2s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.switch.active{background:var(--green)}
+.switch.active::after{transform:translateX(19px)}
+.setting-block{padding:16px 18px 18px;background:#fff;margin-top:9px}
+.setting-label{font-size:14px;color:#8A8A8A;margin-bottom:12px}
+.bg-swatches{display:flex;gap:14px}
+.bg-swatch{width:52px;height:52px;border-radius:8px;border:1px solid #E2E2E2;position:relative}
+.bg-swatch.bg-gray{background:#EDEDED}
+.bg-swatch.bg-white{background:#fff}
+.bg-swatch.bg-warm{background:#F4EBDC}
+.bg-swatch.active{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--green)}
+.danger-row{width:100%;margin-top:9px;height:54px;background:#fff;color:#E64340;font-size:15.5px}
+.danger-row:active{background:#F7F7F7}
+.placeholder-link{min-width:12px;pointer-events:none}
+.option-row{display:flex;align-items:center;gap:12px;width:100%;height:58px;padding:0 20px;background:#fff;font-size:16px;text-align:left}
+.option-row+.option-row{position:relative}
+.option-row+.option-row::before{content:"";position:absolute;top:0;left:20px;right:0;height:1px;background:var(--line)}
+.option-row:active{background:#F2F2F2}
+.option-row svg{width:22px;height:22px;display:block;color:#111}
+
+/* ---------- 聊天输入栏 ---------- */
+.composer{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 8px;background:#F7F7F7;border-top:1px solid #E2E2E2}
+.comp-btn{width:32px;height:32px;flex:0 0 32px;display:flex;align-items:center;justify-content:center;color:#3A3A3A;border-radius:50%}
+.comp-btn:active{opacity:.55}
+.comp-btn svg{width:26px;height:26px;display:block}
+.comp-field{flex:1;min-width:0;display:flex;align-items:center;background:#fff;border-radius:5px;padding:0 8px;height:36px}
+.msg-input{flex:1;height:36px;font-size:15px;background:transparent}
+.comp-mic{width:24px;height:24px;flex:0 0 24px;display:flex;align-items:center;justify-content:center;color:#8A8A8A;pointer-events:none}
+.comp-mic svg{width:20px;height:20px;display:block}
+.hold-talk{flex:1;height:36px;line-height:36px;text-align:center;font-size:15px;color:#333;border-radius:5px;user-select:none;-webkit-user-select:none;touch-action:none}
+.hold-talk.active{background:#DEDEDE}
+.send-inline{flex:0 0 auto;height:28px;padding:0 12px;border-radius:4px;background:var(--green);color:#fff;font-size:13.5px}
+.send-inline[disabled]{opacity:.35}
+
+/* ---------- 聊天面板 ---------- */
+.chat-panel{flex:0 0 auto;background:#F7F7F7;border-top:1px solid #E9E9E9;overflow:hidden}
+.panel-tabs{display:flex;align-items:center;gap:18px;padding:8px 16px 4px;font-size:13.5px;color:#8A8A8A}
+.panel-tab.active{color:#111;font-weight:600}
+.panel-manage{margin-left:auto;color:var(--green);font-size:13px}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;height:214px;overflow:auto;padding:6px 14px 12px}
+.emoji-grid button{height:40px;font-size:26px;line-height:1;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.emoji-grid button:active{background:#E4E4E4}
+.card-pick{height:214px;overflow:auto;padding:4px 14px 12px;background:#F7F7F7}
+.card-pick-item{width:100%;text-align:left;background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:8px}
+.card-pick-item b{display:block;font-size:14px;font-weight:600;margin-bottom:2px}
+.card-pick-item span{font-size:12.5px;color:#8A8A8A;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-pick-item:active{background:#EDEDED}
+.plus-panel{padding-bottom:6px}
+.plus-track{display:flex;width:200%;transition:transform .26s cubic-bezier(.22,.8,.3,1)}
+.plus-page{width:50%;display:grid;grid-template-columns:repeat(4,1fr);row-gap:14px;padding:16px 10px 6px}
+.plus-item{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11.5px;color:#555}
+.plus-item:active .plus-ico{background:#E2E2E2}
+.plus-ico{width:54px;height:54px;border-radius:10px;background:#F2F2F2;display:flex;align-items:center;justify-content:center}
+.plus-ico svg{width:27px;height:27px;display:block}
+.plus-dots{display:flex;justify-content:center;gap:6px;padding:2px 0 6px}
+.plus-dots i{width:6px;height:6px;border-radius:50%;background:#CFCFCF;transition:background .2s}
+.plus-dots i.active{background:#7A7A7A}
+
+/* ---------- 消息气泡 ---------- */
+.msg-area{flex:1;overflow:auto;padding:10px 12px 18px;background:var(--gray);-webkit-overflow-scrolling:touch}
+.msg-area.bg-gray{background:#EDEDED}
+.msg-area.bg-white{background:#FFFFFF}
+.msg-area.bg-warm{background:#F5EEE2}
+.msg-time{text-align:center;font-size:11.5px;color:#A6A6A6;margin:6px 0 14px}
+.msg{display:flex;align-items:flex-start;gap:8px;margin-bottom:16px}
+.msg.mine{flex-direction:row;justify-content:flex-end}
+.msg .av{width:38px;height:38px;flex:0 0 38px;font-size:14px;border-radius:4px}
+.msg .av.me{background:#9AA7B4}
+.msg-body{display:flex;flex-direction:column;min-width:0;max-width:70%}
+.msg.mine .msg-body{align-items:flex-end}
+.msg-sender{font-size:11.5px;color:#9B9B9B;margin-bottom:4px;padding-left:2px}
+.msg .bubble{position:relative;max-width:100%;padding:9px 12px;border-radius:5px;background:#fff;font-size:15.5px;line-height:1.45;word-break:break-word;white-space:pre-wrap}
+.msg.mine .bubble{background:#95EC69;color:#111}
+.bubble.voice{display:flex;align-items:center;gap:8px;min-width:78px;padding:11px 12px;cursor:pointer}
+.voice-bars{display:flex;align-items:center;gap:2px;height:14px}
+.voice-bars i{width:2px;background:#4A4A4A;border-radius:1px}
+.voice-bars i:nth-child(1){height:6px}
+.voice-bars i:nth-child(2){height:12px}
+.voice-bars i:nth-child(3){height:8px}
+.msg.mine .voice-bars i{background:#2F5B22}
+.voice-len{font-size:13px;color:#666}
+.msg.mine .voice-len{color:#33691E}
+.bubble.sticker{background:transparent!important;padding:0;font-size:56px;line-height:1.1}
+.bubble.sticker.sm{font-size:22px;line-height:1.45;max-width:190px;padding:8px 12px;border-radius:8px;background:#fff!important;word-break:break-all}
+.bubble.card{background:#fff!important;padding:0;border-radius:6px;overflow:hidden;min-width:170px;border:1px solid #E6E6E6}
+.bubble.card .cd-title{font-size:14px;font-weight:600;color:#222;padding:8px 11px 0}
+.bubble.card .cd-text{font-size:13.5px;line-height:1.5;color:#555;padding:5px 11px 11px;white-space:pre-wrap}
+.call-note{display:flex;align-items:center;gap:7px;padding:9px 12px;font-size:14px;color:#555;background:#fff;border-radius:5px}
+.call-note svg{width:18px;height:18px;color:#07C160}
+.msg.mine .call-note{background:#95EC69;color:#2E5A1F}
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:6px;color:#B1B1B1;font-size:13px}
+.chat-empty svg{width:76px;height:76px;opacity:.5}
+#pageLibrary{z-index:46}
+
+/* ---------- 录音提示 ---------- */
+.rec-overlay{position:absolute;top:0;right:0;bottom:0;left:0;z-index:70;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.12)}
+.rec-box{min-width:140px;padding:18px 20px 14px;border-radius:14px;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;gap:10px}
+.rec-wave{display:flex;align-items:center;gap:3px;height:26px}
+.rec-wave i{width:3px;border-radius:2px;background:#fff;animation:wave .9s ease-in-out infinite}
+.rec-wave i:nth-child(1){height:8px;animation-delay:0s}
+.rec-wave i:nth-child(2){height:16px;animation-delay:.1s}
+.rec-wave i:nth-child(3){height:22px;animation-delay:.2s}
+.rec-wave i:nth-child(4){height:12px;animation-delay:.3s}
+.rec-wave i:nth-child(5){height:24px;animation-delay:.15s}
+.rec-wave i:nth-child(6){height:14px;animation-delay:.25s}
+.rec-wave i:nth-child(7){height:7px;animation-delay:.05s}
+@keyframes wave{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+.rec-time{font-size:13px;color:#fff;font-variant-numeric:tabular-nums}
+.rec-tip{font-size:11.5px;color:rgba(255,255,255,.7)}
+
+/* ---------- 通话 ---------- */
+.call-screen{position:absolute;top:0;right:0;bottom:0;left:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:64px 0 56px;background:#2B2F33;color:#fff;opacity:0;pointer-events:none;transition:opacity .22s;overflow:hidden}
+.call-screen.open{opacity:1;pointer-events:auto}
+.call-bg{position:absolute;top:0;right:0;bottom:0;left:0;background:radial-gradient(120% 80% at 50% 0%,#4B5257 0%,#23272A 62%,#1B1E21 100%)}
+.call-screen.video .call-bg{background:radial-gradient(130% 90% at 50% 10%,#5A6B62 0%,#33403A 55%,#1C2420 100%)}
+.call-top{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px}
+.call-avatar{width:96px;height:96px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+.call-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.call-name{font-size:19px;font-weight:600;letter-spacing:.5px}
+.call-status{font-size:13.5px;color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+.call-self{position:absolute;z-index:2;right:16px;top:76px;width:88px;height:120px;border-radius:12px;background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.12);display:none;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.6)}
+.call-screen.video .call-self{display:flex}
+.call-controls{position:relative;z-index:2;display:flex;align-items:flex-end;gap:26px}
+.call-btn{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11.5px;color:rgba(255,255,255,.8)}
+.call-circle{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;transition:background .15s}
+.call-circle svg{width:25px;height:25px;display:block}
+.call-btn:active .call-circle{background:rgba(255,255,255,.28)}
+.call-btn.hangup .call-circle{background:#F04C4C}
+.call-btn.active .call-circle{background:#fff}
+.call-btn.active .call-circle svg{stroke:#111}
+.call-btn.active{color:#fff}
+.call-screen:not(.video) .call-btn[data-callbtn="flip"]{display:none}
+
+/* ---------- 小屏：铺满屏幕 ---------- */
+@media (max-width:520px){
+  body{display:block;background:#fff}
+  .phone{width:100%;height:100%;height:100vh;height:100dvh;border-radius:0;box-shadow:none;background:transparent}
+  .screen{border-radius:0}
+  .splash{border-radius:0}
+}
+
+/* ---------- 字卡库增强 ---------- */
+.lib-head-actions{display:flex;align-items:center;gap:14px}
+.lib-search{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 14px;background:#F2F2F2;border-bottom:1px solid var(--line)}
+.lib-search input{flex:1;height:32px;padding:0 12px;background:#fff;border-radius:6px;font-size:14px}
+.lib-search-clear{width:22px;height:22px;border-radius:50%;background:#C8C8C8;color:#fff;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
+.lib-filter{flex:0 0 auto;display:flex;gap:7px;padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.lib-filter::-webkit-scrollbar{display:none}
+.lib-filter .chip{flex:0 0 auto;padding:4px 12px;border-radius:12px;font-size:12.5px;background:#F2F2F2;color:#666;border:1px solid transparent;white-space:nowrap}
+.lib-filter .chip.active{background:#E8F7EE;color:var(--green);border-color:#B7E4C6}
+.lib-filter .chip.disabled{opacity:.45}
+
+.lib-batch-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#FAFAFA;border-top:1px solid var(--line)}
+.lib-batch-count{font-size:13.5px;color:#555}
+.lib-batch-actions{display:flex;gap:14px}
+.lib-batch-actions button{font-size:13.5px;color:#333}
+.lib-batch-actions button.danger{color:#FA3B30}
+
+.lib-tools{flex:0 0 auto;display:flex;gap:6px;padding:8px 10px 10px;background:#F7F7F7;border-top:1px solid var(--line);flex-wrap:wrap}
+.lib-tools button{flex:1 1 30%;display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;font-size:12px;color:#444;background:#fff;border-radius:8px;border:1px solid #EAEAEA}
+.lib-tools button:active{background:#F0F0F0}
+.lib-tools button svg{width:15px;height:15px}
+
+.card-row.disabled .card-main{opacity:.45}
+.card-row.disabled .card-title{text-decoration:line-through}
+.card-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:10px;font-size:10.5px;margin-top:5px;border:1px solid}
+.card-row.batch .card-check{width:20px;height:20px;border-radius:50%;border:1.5px solid #C8C8C8;flex:0 0 20px;align-self:center;margin-right:4px;display:flex;align-items:center;justify-content:center}
+.card-row.batch.selected .card-check{background:var(--green);border-color:var(--green)}
+.card-row.batch.selected .card-check::after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+
+/* 分组选择 chips（卡片编辑） */
+.card-group-pick{margin-top:14px}
+.cg-label{display:block;font-size:13px;color:#8A8A8A;margin-bottom:8px}
+.cg-chips{display:flex;flex-wrap:wrap;gap:7px}
+.cg-chips .chip{padding:5px 12px;border-radius:14px;font-size:13px;background:#F2F2F2;color:#555;border:1px solid transparent}
+.cg-chips .chip.active{background:#E8F7EE;color:var(--green);border-color:#B7E4C6}
+.cg-chips .chip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+/* 分组管理列表 */
+.gm-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.gm-dot{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
+.gm-name{flex:1;font-size:15px;font-weight:600}
+.gm-count{font-size:12px;color:#9B9B9B}
+.gm-row .gm-actions{display:flex;gap:8px}
+.gm-row .gm-actions button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:#888}
+.gm-row .gm-actions button.danger{color:#FA3B30;border-color:rgba(250,59,48,.25)}
+.gm-row.disabled .gm-name{opacity:.5}
+.gm-empty{padding:40px 16px;text-align:center;color:#B8B8B8;font-size:14px;line-height:1.8}
+
+/* 字卡选择面板分组筛选 */
+.card-pick-filter{display:flex;gap:6px;padding:8px 10px 4px;overflow-x:auto;scrollbar-width:none}
+.card-pick-filter::-webkit-scrollbar{display:none}
+.card-pick-filter .chip{flex:0 0 auto;padding:3px 10px;border-radius:11px;font-size:12px;background:#EAEAEA;color:#666;border:1px solid transparent}
+.card-pick-filter .chip.active{background:#E8F7EE;color:var(--green)}
+.card-pick-list{height:182px;overflow:auto;padding:2px 14px 12px}
+
+/* ---------- 标题状态 / 正在输入 ---------- */
+.chat-status{flex:0 0 auto;max-width:96px;padding:1px 6px;border-radius:9px;background:rgba(0,0,0,.05);font-size:11px;font-weight:400;line-height:16px;color:#8A8A8A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- 对方消息气泡（镜像：头像在左） ---------- */
+.msg.their{flex-direction:row}
+.msg.their .bubble{background:#fff;color:#111}
+.msg.their .call-note{background:#fff;color:#555}
+.msg.their .av{background:#9AA7B4}
+.msg .av[data-uid]{cursor:pointer}
+.msg .av[data-uid]:active{opacity:.65}
+.msg-time em{font-style:normal;font-size:10.5px;color:#9C9C9C;margin-left:6px;letter-spacing:.2px}
+
+/* ---------- 表情库 ---------- */
+.emoji-lib-bar{display:flex;gap:6px;padding:6px 14px 0;overflow-x:auto;scrollbar-width:none}
+.emoji-lib-bar::-webkit-scrollbar{display:none}
+.emoji-lib-bar .chip{flex:0 0 auto;padding:3px 10px;border-radius:11px;font-size:12px;background:#EAEAEA;color:#666;border:1px solid transparent;white-space:nowrap}
+.emoji-lib-bar .chip.active{background:#E8F7EE;color:var(--green)}
+.emoji-lib-bar .chip.add{color:var(--green);background:#fff;border-color:#DCDCDC}
+.emoji-grid{height:198px}
+.emoji-empty{padding:42px 16px;text-align:center;color:#B8B8B8;font-size:13.5px;line-height:1.9}
+.emoji-mgr-row{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.emoji-mgr-row:active{background:#F7F7F7}
+.emoji-mgr-ico{width:34px;height:34px;border-radius:8px;background:#F2F2F2;display:flex;align-items:center;justify-content:center;font-size:19px;flex:0 0 34px;overflow:hidden}
+.emoji-mgr-name{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emoji-mgr-count{font-size:12px;color:#9B9B9B}
+.emoji-mgr-badge{font-size:10.5px;color:#8A8A8A;background:#F2F2F2;padding:1px 6px;border-radius:8px}
+.emoji-textarea{min-height:150px}
+.emoji-import-row{margin-top:10px}
+.emoji-grid.img-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 4px;padding:6px 10px 12px;align-content:start}
+.emoji-grid.img-grid .eg-img{height:auto;flex-direction:column;gap:3px;padding:2px;border-radius:8px;background:transparent}
+.emoji-grid.img-grid .eg-img img{width:62px;height:62px;object-fit:contain;display:block}
+.emoji-grid.img-grid .eg-img span{font-size:11px;color:#666;line-height:14px;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.emoji-mgr-ico img{width:100%;height:100%;object-fit:contain}
+.emoji-img-list{margin-top:6px;display:flex;flex-direction:column;gap:8px;max-height:232px;overflow:auto}
+.emoji-img-row{display:flex;align-items:center;gap:10px;background:#F7F7F7;border-radius:10px;padding:8px 10px}
+.emoji-img-row img{width:44px;height:44px;object-fit:contain;border-radius:6px;background:#fff;flex:0 0 44px}
+.emoji-img-name{flex:1;min-width:0;background:#fff;border-radius:8px;padding:7px 10px;font-size:14px}
+.emoji-img-del{flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#E8E8E8;color:#777;font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
+.emoji-img-del:active{background:#DDD}
+.emoji-img-empty{padding:14px 0;text-align:center;color:#B8B8B8;font-size:13px}
+.bubble.sticker.pic{padding:0!important;background:transparent!important;overflow:visible}
+.bubble.sticker.pic img{width:120px;max-width:44vw;height:auto;display:block;border-radius:6px}
+#pageProfile{z-index:47}
+
+/* ---------- 全局设置 ---------- */
+.delay-row{display:flex;align-items:center;gap:8px}
+.delay-field{flex:1;display:flex;flex-direction:column;gap:4px}
+.delay-field label{font-size:12px;color:#9B9B9B}
+.delay-field input{width:100%;padding:9px 10px;background:#F7F7F7;border-radius:8px;font-size:14px;text-align:center;-moz-appearance:textfield}
+.delay-field input::-webkit-outer-spin-button,.delay-field input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.delay-sep{color:#9B9B9B;font-size:16px;margin-top:16px}
+.delay-presets{display:flex;gap:8px;margin-top:12px}
+.delay-presets button{flex:1;padding:7px 0;font-size:12.5px;color:#555;background:#F2F2F2;border-radius:7px}
+.delay-presets button:active{background:#E4E4E4}
+.setting-desc{font-size:12.5px;line-height:1.6;color:#8A8A8A}
+
+.switch{width:44px;height:26px;border-radius:13px;background:#E5E5E5;position:relative;transition:background .2s;flex:0 0 44px}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.active{background:var(--green)}
+.switch.active::after{transform:translateX(18px)}
+
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="screen" id="screen">
+
+    <!-- 状态栏 -->
+    <div class="statusbar">
+      <div class="sb-left"><span class="sb-clock" id="sbClock">00:00</span></div>
+      <div class="sb-right">
+        <span class="num">5G</span>
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="#000"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3.6" width="3" height="8.4" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/></svg>
+        <span class="num" id="batteryNum">77</span>
+        <svg width="27" height="13" viewBox="0 0 27 13"><rect x="0.7" y="0.7" width="22.4" height="11.6" rx="3.4" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1.2"/><rect x="2.6" y="2.6" width="18.6" height="7.8" rx="2" fill="#000"/><path d="M24.6 4.4v4.2c.9-.3 1.5-1.1 1.5-2.1s-.6-1.8-1.5-2.1z" fill="#000" fill-opacity=".4"/></svg>
+      </div>
+    </div>
+
+    <!-- 标题栏 -->
+    <div class="header">
+      <div class="title live" id="title">00:00</div>
+      <div class="header-actions" id="headerActions">
+        <button class="icon-btn" id="btnSearch" aria-label="搜索">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.6" cy="10.6" r="6.3"/><path d="M15.4 15.4 20 20"/></svg>
+        </button>
+        <button class="icon-btn" id="btnPlus" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10.2"/><path d="M12 7v10M7 12h10" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content" id="content">
+      <section class="page active" id="page-chat">
+        <div class="list" id="chatList"></div>
+      </section>
+      <section class="page" id="page-contacts">
+        <div class="contacts-list" id="contactsList"></div>
+        <div class="index-rail" id="indexRail"></div>
+      </section>
+      <section class="page" id="page-other">
+        <div class="empty-tip" id="otherTip">页面待实现</div>
+      </section>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="tabbar" id="tabbar">
+      <button class="tab active" data-tab="chat">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="currentColor"><path d="M12.3 4.1c-4.9 0-8.9 3.3-8.9 7.4 0 2.3 1.4 4.4 3.7 5.7l-.9 2.9 3.3-1.7c.7.2 1.5.3 2.3.3h.5c-.2-.6-.3-1.3-.3-1.9 0-4.1 3.7-7.3 8.4-7.3.3 0 .6 0 .9.1-1.2-3.1-4.6-5.5-9-5.5zm-2.9 4.1a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3zm6.1 0a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3z"/><path d="M19.4 10.6c-4.1 0-7.4 2.8-7.4 6.2s3.3 6.2 7.4 6.2c.7 0 1.4-.1 2.1-.3l2.7 1.4-.7-2.4c1.8-1.1 3-3 3-4.9 0-3.4-3.3-6.2-7.1-6.2zm-2.6 3.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5.2 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+        </span>
+        <span>聊天</span>
+      </button>
+      <button class="tab" data-tab="contacts">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10.1" cy="9.7" r="3.9"/><path d="M3.6 21.5c.5-3.8 3.2-6.2 6.5-6.2s6 2.4 6.5 6.2"/><path d="M20.1 9.1h4.7M20.1 13.5h4.7M20.1 17.9h4.7"/></svg>
+        </span>
+        <span>通讯录</span>
+      </button>
+      <button class="tab" data-tab="discover">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.55"><circle cx="14" cy="14" r="9.5"/><path d="M17.9 10.1l-2.2 5.6-5.6 2.2 2.2-5.6z" stroke-linejoin="round"/></svg>
+          <i class="dot"></i>
+        </span>
+        <span>发现</span>
+      </button>
+      <button class="tab" data-tab="me">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="14" cy="9.5" r="4.2"/><path d="M5.8 23.6c.6-4.4 4-7.3 8.2-7.3s7.6 2.9 8.2 7.3"/></svg>
+        </span>
+        <span>我</span>
+      </button>
+    </div>
+    <div class="home-indicator"><i></i></div>
+
+    <!-- 加号菜单 -->
+    <div class="mask" id="mask"></div>
+    <div class="menu" id="plusMenu">
+      <button class="menu-item" data-action="group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"><path d="M4.2 4.3h15.6c.9 0 1.6.7 1.6 1.6v9.2c0 .9-.7 1.6-1.6 1.6h-5.9l-3.8 3.5v-3.5H4.2c-.9 0-1.6-.7-1.6-1.6V5.9c0-.9.7-1.6 1.6-1.6z"/><circle cx="8.6" cy="10.5" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="10.5" r=".95" fill="currentColor" stroke="none"/><circle cx="15.4" cy="10.5" r=".95" fill="currentColor" stroke="none"/></svg>
+        <span>发起群聊</span>
+      </button>
+      <button class="menu-item" data-action="friend">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"><circle cx="9.6" cy="8.7" r="3.7"/><path d="M3.2 19.6c.5-3.4 3.1-5.6 6.4-5.6 1 0 1.9.2 2.7.7"/><path d="M18.2 12.6v6.2M15.1 15.7h6.2"/></svg>
+        <span>添加朋友</span>
+      </button>
+      <button class="menu-item" data-action="cards">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="7.2" y="3.2" width="13.4" height="14.4" rx="2.2"/><path d="M4.4 7.6v11.2c0 1.7 1 2.7 2.7 2.7h8.4"/></svg>
+        <span>字卡库</span>
+      </button>
+      <button class="menu-item" data-action="pay">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"><rect x="3.4" y="3.4" width="6.2" height="6.2" rx="1.2"/><rect x="14.4" y="3.4" width="6.2" height="6.2" rx="1.2"/><rect x="3.4" y="14.4" width="6.2" height="6.2" rx="1.2"/><path d="M14.4 14.4h2.9v2.9M20.6 14.4v6.2h-3.3" stroke-linecap="round"/></svg>
+        <span>收付款</span>
+      </button>
+    </div>
+
+    <div class="sheet-mask" id="sheetMask"></div>
+
+    <!-- 发起群聊 -->
+    <div class="sheet" id="sheetGroup" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">发起群聊</div>
+        <button class="link" id="groupDone" disabled>完成</button>
+      </div>
+      <div class="sheet-body" id="groupList"></div>
+    </div>
+
+    <!-- 好友列表 -->
+    <div class="sheet" id="sheetFriends" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">好友</div>
+        <button class="link" id="friendAddBtn">添加</button>
+      </div>
+      <div class="sheet-body" id="friendList"></div>
+    </div>
+
+    <!-- 添加 / 编辑好友 -->
+    <div class="sheet" id="sheetFriendEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" id="friendEditCancel">取消</button>
+        <div class="sheet-title" id="friendEditTitle">添加好友</div>
+        <button class="link" id="friendSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <div class="avatar-edit">
+            <div class="avatar-preview" id="avatarPreview"></div>
+            <div class="avatar-tools">
+              <div class="avatar-label">头像（点击更换图片）</div>
+              <label class="upload-btn">从相册选择<input type="file" id="avatarFile" accept="image/*" hidden></label>
+              <div class="swatches" id="swatches"></div>
+            </div>
+          </div>
+          <label class="field">
+            <span>昵称</span>
+            <input id="friendName" maxlength="12" placeholder="请输入好友昵称">
+          </label>
+          <label class="field">
+            <span>地区</span>
+            <input id="friendRegion" maxlength="20" placeholder="例如：浙江 杭州">
+          </label>
+          <button class="danger-btn hidden" id="friendDelete">删除好友</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修改地区 -->
+    <div class="sheet" id="sheetRegion" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">地区</div>
+        <button class="link" id="regionSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <label class="field">
+            <span>地区</span>
+            <input id="regionInput" maxlength="20" placeholder="例如：浙江 杭州">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建 / 编辑字卡 -->
+    <div class="sheet" id="sheetCardEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title" id="cardEditTitle">新建字卡</div>
+        <button class="link" id="cardSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="card-edit">
+          <input class="card-title-input" id="cardTitle" maxlength="20" placeholder="标题（可不填）">
+          <textarea class="card-textarea" id="cardContent" placeholder="写点想说的话…"></textarea>
+          <div class="card-group-pick">
+            <span class="cg-label">分组</span>
+            <div class="cg-chips" id="cardGroupChips"></div>
+          </div>
+          <button class="danger-btn hidden" id="cardDelete">删除字卡</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 聊天消息设置 -->
+    <div class="sheet" id="sheetChatSettings" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">消息设置</div>
+        <span class="link placeholder-link"></span>
+      </div>
+      <div class="sheet-body">
+        <div class="setting-row"><span>置顶聊天</span><button class="switch" id="swPinned" aria-label="置顶聊天"></button></div>
+        <div class="setting-row"><span>消息免打扰</span><button class="switch" id="swMuted" aria-label="消息免打扰"></button></div>
+        <div class="setting-row auto-reply-row hidden" id="autoReplyRow"><span>自动回复</span><button class="switch" id="swAutoReply" aria-label="自动回复"></button></div>
+        <div class="setting-block">
+          <div class="setting-label">聊天背景</div>
+          <div class="bg-swatches" id="bgSwatches">
+            <button class="bg-swatch bg-gray active" data-bg="gray" aria-label="浅灰"></button>
+            <button class="bg-swatch bg-white" data-bg="white" aria-label="白色"></button>
+            <button class="bg-swatch bg-warm" data-bg="warm" aria-label="暖色"></button>
+          </div>
+        </div>
+        <button class="danger-row" id="clearChat">清空聊天记录</button>
+      </div>
+    </div>
+
+    <!-- 音视频通话选择 -->
+    <div class="sheet" id="sheetCallOptions" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">音视频通话</div>
+        <span class="link placeholder-link"></span>
+      </div>
+      <div class="sheet-body">
+        <button class="option-row" data-callmode="voice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 3.8h3.3l1.5 4.2-2 1.6a12.4 12.4 0 0 0 6.4 6.4l1.6-2 4.2 1.5v3.3c0 1-.8 1.8-1.8 1.8C10.6 20.2 3.8 13.4 3.8 5.6c0-1 .8-1.8 1.4-1.8z"/></svg>
+          <span>语音通话</span>
+        </button>
+        <button class="option-row" data-callmode="video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2.8" y="6.4" width="12.6" height="11.2" rx="2.2"/><path d="M15.4 11l5.8-3.4v8.8L15.4 13z"/></svg>
+          <span>视频通话</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 字卡库 -->
+    <div class="screen-page" id="pageLibrary" aria-hidden="true">
+      <div class="detail-head">
+        <button class="detail-back" id="libraryBack" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5 8 12l7.5 7.5"/></svg>
+        </button>
+        <div class="detail-title"><span>字卡库</span></div>
+        <div class="lib-head-actions">
+          <button class="detail-back" id="libSearchBtn" aria-label="搜索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.6" cy="10.6" r="6.3"/><path d="M15.4 15.4 20 20"/></svg>
+          </button>
+          <button class="detail-back" id="libBatchBtn" aria-label="批量">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" opacity=".5"/><rect x="3" y="13" width="8" height="8" rx="1.5" opacity=".5"/><rect x="13" y="13" width="8" height="8" rx="1.5" opacity=".3"/></svg>
+          </button>
+          <button class="detail-back" id="cardAdd" aria-label="新建字卡">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="lib-search hidden" id="libSearchBar">
+        <input id="libSearchInput" placeholder="搜索字卡标题或内容">
+        <button class="lib-search-clear" id="libSearchClear" aria-label="清除">×</button>
+      </div>
+      <div class="lib-filter" id="libFilterBar"></div>
+      <div class="library-body" id="cardList"></div>
+      <div class="lib-batch-bar hidden" id="libBatchBar">
+        <span class="lib-batch-count">已选 0 项</span>
+        <div class="lib-batch-actions">
+          <button id="libBatchGroup">分组</button>
+          <button id="libBatchDisable">屏蔽</button>
+          <button id="libBatchDelete" class="danger">删除</button>
+        </div>
+      </div>
+      <div class="lib-tools">
+        <button id="libGroupMgr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h4l1.8 1.8H20a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 18z"/></svg>分组管理</button>
+        <button id="libDedup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h16M7 10h10M10 14h4"/></svg>一键去重</button>
+        <button id="libExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>导出</button>
+        <button id="libImport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M7 13l5-5 5 5"/><path d="M4 4h16"/></svg>导入</button>
+        <button id="libSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>设置</button>
+      </div>
+      <input type="file" id="libImportFile" accept=".json" hidden>
+    </div>
+
+    <!-- 好友资料 -->
+    <div class="screen-page" id="pageProfile" aria-hidden="true">
+      <div class="detail-head profile-head">
+        <button class="detail-back" id="profileBack" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5 8 12l7.5 7.5"/></svg>
+        </button>
+        <div class="detail-title"></div>
+        <div class="profile-head-actions">
+          <button class="detail-back" id="profileEdit" aria-label="编辑">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
+          </button>
+          <button class="detail-back" id="profileMore" aria-label="更多">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="profile-scroll">
+        <div class="profile-main">
+          <button class="profile-av" id="profileAvatar" aria-label="更换头像"></button>
+          <div class="profile-info">
+            <div class="profile-name" id="profileName"></div>
+            <button class="profile-region" id="profileRegionRow">地区：<span id="profileRegion">未设置</span></button>
+          </div>
+        </div>
+        <input type="file" id="profileAvatarFile" accept="image/*" hidden>
+        <div class="profile-card">
+          <div class="ps-row"><span>朋友资料</span><span class="chev">›</span></div>
+          <div class="ps-row"><span>标签</span><span class="ps-value">朋友</span></div>
+        </div>
+        <div class="profile-card">
+          <div class="ps-row"><span>朋友圈</span><span class="chev">›</span></div>
+          <div class="moments-strip"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="profile-card">
+          <div class="ps-row"><span>视频号</span><span class="chev">›</span></div>
+          <div class="video-mini"><span></span></div>
+        </div>
+        <div class="profile-btns">
+          <button id="profileChat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M20.5 4.5H3.5c-.6 0-1 .4-1 1v9c0 .6.4 1 1 1h6.7l3.6 3.4v-3.4h6.7c.6 0 1-.4 1-1v-9c0-.6-.4-1-1-1z"/></svg>
+            发消息
+          </button>
+          <button id="profileCall">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 3.8h3.3l1.5 4.2-2 1.6a12.4 12.4 0 0 0 6.4 6.4l1.6-2 4.2 1.5v3.3c0 1-.8 1.8-1.8 1.8C10.6 20.2 3.8 13.4 3.8 5.6c0-1 .8-1.8 1.4-1.8z"/></svg>
+            音视频通话
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 会话详情 -->
+    <div class="screen-page" id="pageChatDetail" aria-hidden="true">
+      <div class="detail-head">
+        <button class="detail-back" id="chatBack" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5 8 12l7.5 7.5"/></svg>
+        </button>
+        <div class="detail-title"><span id="chatTitle"></span><span class="detail-count" id="chatCount"></span><span class="chat-status hidden" id="chatStatus"></span></div>
+        <button class="detail-back" id="chatMore" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        </button>
+      </div>
+      <div class="msg-area bg-gray" id="msgArea"></div>
+      <div class="composer">
+        <button class="comp-btn" id="voiceToggle" aria-label="语音">
+          <span class="ico-voice" id="icoVoice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"><circle cx="12" cy="12" r="9.4"/><path d="M8.3 9.8v4.4M11.4 7.6v8.8M14.6 9.2v5.6M17.6 10.6v2.8"/></svg>
+          </span>
+          <span class="ico-keyboard hidden" id="icoKeyboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="6.5" width="18.4" height="11" rx="2.4"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7 13.6h10"/></svg>
+          </span>
+        </button>
+        <div class="comp-field">
+          <input class="msg-input" id="msgInput" placeholder="">
+          <span class="comp-mic" id="compMic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9.6" y="3.6" width="4.8" height="9" rx="2.4"/><path d="M6.6 11.4a5.4 5.4 0 0 0 10.8 0M12 16.8V19M9.4 21h5.2"/></svg>
+          </span>
+          <button class="hold-talk hidden" id="holdTalk">按住 说话</button>
+          <button class="send-inline hidden" id="sendBtn">发送</button>
+        </div>
+        <button class="comp-btn" id="emojiToggle" aria-label="表情">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9.4"/><path d="M8.6 14.2a4.3 4.3 0 0 0 6.8 0" stroke-linecap="round"/><circle cx="9" cy="9.6" r=".95" fill="currentColor" stroke="none"/><circle cx="15" cy="9.6" r=".95" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button class="comp-btn" id="plusToggle" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9.6"/><path d="M12 7.6v8.8M7.6 12h8.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <!-- 表情 / 字卡面板 -->
+      <div class="chat-panel hidden" id="emojiPanel">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-etab="emoji">表情</button>
+          <button class="panel-tab" data-etab="cards">字卡</button>
+          <button class="panel-manage" id="manageCards">管理</button>
+        </div>
+        <div class="emoji-lib-bar" id="emojiLibBar"></div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+        <div class="card-pick hidden" id="cardPick">
+          <div class="card-pick-filter" id="cardPickFilter"></div>
+          <div class="card-pick-list" id="cardPickList"></div>
+        </div>
+      </div>
+
+      <!-- 加号功能面板：两页可滑动 -->
+      <div class="chat-panel plus-panel hidden" id="plusPanel">
+        <div class="plus-track" id="plusTrack">
+          <div class="plus-page">
+            <button class="plus-item" data-plus="album"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="3.4" y="4.6" width="17.2" height="14.8" rx="2.2"/><circle cx="8.7" cy="9.6" r="1.6"/><path d="M4.4 16.6l4.6-4.6 3.6 3.6 2.5-2.5 4.5 4.5"/></svg></span><span>相册</span></button>
+            <button class="plus-item" data-plus="camera"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M4 8.6h3.2l1.4-2.2h6.8l1.4 2.2H20v9H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span><span>拍摄</span></button>
+            <button class="plus-item" data-plus="video"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="2.8" y="6.4" width="12.6" height="11.2" rx="2.2"/><path d="M15.4 11l5.8-3.4v8.8L15.4 13z"/></svg></span><span>视频通话</span></button>
+            <button class="plus-item" data-plus="location"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>位置</span></button>
+            <button class="plus-item" data-plus="redpacket"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><path d="M4 8.6h16"/></svg></span><span>红包</span></button>
+            <button class="plus-item" data-plus="gift"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="4" y="9.4" width="16" height="10.4" rx="1.6"/><path d="M3.2 6h17.6v3.4H3.2zM12 6v13.8M12 6c-2.8 0-4.4-.9-4.4-2.2S8.9 1.4 9.9 2.2C10.9 3 12 6 12 6zM12 6c2.8 0 4.4-.9 4.4-2.2S15.1 1.4 14.1 2.2C13.1 3 12 6 12 6z"/></svg></span><span>礼物</span></button>
+            <button class="plus-item" data-plus="transfer"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13M13 5l4 4-4 4"/><path d="M20 15H7M11 19l-4-4 4-4"/></svg></span><span>转账</span></button>
+            <button class="plus-item" data-plus="voiceinput"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"><rect x="9.6" y="3.6" width="4.8" height="9" rx="2.4"/><path d="M6.6 11.4a5.4 5.4 0 0 0 10.8 0M12 16.8V19M9.4 21h5.2"/></svg></span><span>语音输入</span></button>
+          </div>
+          <div class="plus-page">
+            <button class="plus-item" data-plus="favorite"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3.2 20 7.5v9L12 20.8 4 16.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v8.8"/></svg></span><span>收藏</span></button>
+            <button class="plus-item" data-plus="contact"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.5-4 3.6-6.4 7.2-6.4s6.7 2.4 7.2 6.4"/></svg></span><span>个人名片</span></button>
+            <button class="plus-item" data-plus="file"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 6.5h6l2 2h9v11h-17z"/></svg></span><span>文件</span></button>
+            <button class="plus-item" data-plus="music"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 18V6.5l9-2v11.5"/><ellipse cx="7" cy="18.4" rx="2.6" ry="2.2"/><ellipse cx="16" cy="15.9" rx="2.6" ry="2.2"/></svg></span><span>音乐</span></button>
+          </div>
+        </div>
+        <div class="plus-dots" id="plusDots"><i class="active"></i><i></i></div>
+      </div>
+
+      <!-- 录音提示 -->
+      <div class="rec-overlay hidden" id="recOverlay">
+        <div class="rec-box">
+          <div class="rec-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="rec-time" id="recTime">0:00</div>
+          <div class="rec-tip">松开发送</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 音视频通话 -->
+    <div class="call-screen" id="callScreen" aria-hidden="true">
+      <div class="call-bg"></div>
+      <div class="call-top">
+        <div class="call-avatar" id="callAvatar"></div>
+        <div class="call-name" id="callName"></div>
+        <div class="call-status" id="callStatus">正在呼叫…</div>
+      </div>
+      <div class="call-self"><span>我的画面</span></div>
+      <div class="call-controls">
+        <button class="call-btn" data-callbtn="mute">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><rect x="9.4" y="3.4" width="5.2" height="9.6" rx="2.6"/><path d="M6.4 11.6a5.6 5.6 0 0 0 11.2 0M12 17.2V20M9.2 21.4h5.6"/><path d="M4 3.2 20 20.8" stroke-width="1.9"/></svg></span>
+          <span>静音</span>
+        </button>
+        <button class="call-btn" data-callbtn="speaker">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.4h3.4L12.4 5v14L7.4 14.6H4z"/><path d="M15.6 9.2a4 4 0 0 1 0 5.6M18 6.8a7.4 7.4 0 0 1 0 10.4"/></svg></span>
+          <span>免提</span>
+        </button>
+        <button class="call-btn" data-callbtn="flip">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.6h10.6a5.4 5.4 0 0 1 0 10.8H9"/><path d="M7.2 5.6 4 8.6l3.2 3M9 16.4 6.2 19.4 9 22.4"/></svg></span>
+          <span>翻转</span>
+        </button>
+        <button class="call-btn hangup" data-callbtn="hangup">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 9.2c-2.4 0-4.7.4-6.8 1.2-.7.3-1.1.9-1.1 1.7v1.5c0 .6.4 1 1 1h2.2c.5 0 .9-.3 1-.8l.4-1.5c1-.2 2.1-.3 3.3-.3s2.3.1 3.3.3l.4 1.5c.1.5.5.8 1 .8h2.2c.6 0 1-.4 1-1v-1.5c0-.8-.4-1.4-1.1-1.7-2.1-.8-4.4-1.2-6.8-1.2z"/></svg></span>
+          <span>挂断</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 分组管理 -->
+    <div class="sheet" id="sheetGroupMgr" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">分组管理</div>
+        <button class="link" id="groupAddBtn">新建</button>
+      </div>
+      <div class="sheet-body" id="groupMgrList"></div>
+    </div>
+
+    <!-- 分组编辑 -->
+    <div class="sheet" id="sheetGroupEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title" id="groupEditTitle">新建分组</div>
+        <button class="link" id="groupSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <label class="field">
+            <span>分组名称</span>
+            <input id="groupName" maxlength="12" placeholder="例如：日常问候">
+          </label>
+          <div class="field">
+            <span>颜色</span>
+            <div class="swatches" id="groupSwatches"></div>
+          </div>
+          <button class="danger-btn hidden" id="groupDelete">删除分组</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全局设置 -->
+    <div class="sheet" id="sheetAppSettings" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">字卡与回复设置</div>
+        <span class="link placeholder-link"></span>
+      </div>
+      <div class="sheet-body">
+        <div class="setting-row"><span>显示「正在输入」</span><button class="switch" id="swTyping" aria-label="正在输入提示"></button></div>
+        <div class="setting-block">
+          <div class="setting-label">回复延迟（毫秒）</div>
+          <div class="delay-row">
+            <div class="delay-field"><label>最短</label><input type="number" id="delayMin" min="0" max="60000" step="500"></div>
+            <span class="delay-sep">~</span>
+            <div class="delay-field"><label>最长</label><input type="number" id="delayMax" min="0" max="60000" step="500"></div>
+          </div>
+          <div class="delay-presets">
+            <button data-preset="1000,3000">快</button>
+            <button data-preset="3000,7000">正常</button>
+            <button data-preset="6000,12000">慢</button>
+          </div>
+        </div>
+        <div class="setting-block">
+          <div class="setting-label">关于</div>
+          <div class="setting-desc">回复池 = 所有未屏蔽的字卡（被禁用分组中的字卡不参与自动回复）。每条回复从池中随机抽取。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表情库管理 -->
+    <div class="sheet" id="sheetEmojiMgr" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">表情库</div>
+        <button class="link" id="emojiGroupAddBtn">新建</button>
+      </div>
+      <div class="sheet-body" id="emojiMgrList"></div>
+    </div>
+
+    <!-- 表情库编辑 -->
+    <div class="sheet" id="sheetEmojiEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title" id="emojiGroupTitle">新建表情库</div>
+        <button class="link" id="emojiGroupSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <label class="field">
+            <span>名称</span>
+            <input id="emojiGroupName" maxlength="12" placeholder="例如：常用表情">
+          </label>
+          <div class="setting-block">
+            <div class="setting-label">文字表情（一行一个）</div>
+            <textarea class="card-textarea emoji-textarea" id="emojiItems" placeholder="😀&#10;😂&#10;自定义表情文字…"></textarea>
+            <div class="emoji-import-row">
+              <label class="upload-btn">从文件导入（.txt / .json）<input type="file" id="emojiImportFile" accept=".txt,.json,text/plain,application/json" hidden></label>
+            </div>
+          </div>
+          <div class="setting-block">
+            <div class="setting-label">图片表情（可逐张命名）</div>
+            <div class="emoji-img-list" id="emojiImgList"></div>
+            <div class="emoji-import-row">
+              <label class="upload-btn">导入图片（可多选）<input type="file" id="emojiImgFile" accept="image/*" multiple hidden></label>
+            </div>
+          </div>
+          <button class="danger-btn hidden" id="emojiGroupDelete">删除表情库</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- 开场动画 -->
+    <div class="splash" id="splash">
+      <div class="splash-text">开场动画</div>
+      <div class="splash-hint">SPLASH</div>
+    </div>
+
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  var KEY = 'chatApp.v1';
+  var PRESETS = ['#07C160', '#576B95', '#FA9D3B', '#E64340', '#7B68EE', '#00A3B4', '#F76F76', '#4A90E2'];
+  var PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>';
+  var PHONE_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 3.8h3.3l1.5 4.2-2 1.6a12.4 12.4 0 0 0 6.4 6.4l1.6-2 4.2 1.5v3.3c0 1-.8 1.8-1.8 1.8C10.6 20.2 3.8 13.4 3.8 5.6c0-1 .8-1.8 1.4-1.8z"/></svg>';
+  var NAMES = { chat: '聊天', contacts: '通讯录', discover: '发现', me: '我' };
+  var BOUNDS = ['阿', '八', '擦', '搭', '蛾', '发', '噶', '哈', '击', '喀', '垃', '妈', '拿', '哦', '啪', '期', '然', '撒', '塌', '挖', '夕', '压', '匝'];
+  var LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'W', 'X', 'Y', 'Z'];
+  var COLL = (function () { try { return new Intl.Collator('zh-Hans-CN-u-co-pinyin'); } catch (e) { return null; } })();
+  // Pointer Events 兼容：老 WebView 降级为 touch/mouse
+  var PDOWN = window.PointerEvent ? 'pointerdown' : 'touchstart';
+  var PUP = window.PointerEvent ? 'pointerup' : 'touchend';
+  var PCANCEL = window.PointerEvent ? 'pointercancel' : 'touchcancel';
+  var EMOJIS = ['😀', '😄', '😁', '😆', '😊', '😍', '🥰', '😘', '😜', '😝', '🤪', '😎', '🤓', '😏', '😴', '😪',
+    '😭', '😢', '🥺', '😤', '😡', '🤬', '😱', '😨', '😰', '🤔', '🤨', '😐', '😑', '🙄', '😬', '🤗',
+    '🤭', '🤫', '😶', '😮', '😲', '🥳', '🤩', '🤤', '😋', '😵', '🤯', '🥶', '😇', '🤠', '💩', '👻',
+    '👍', '👌', '✌️', '🙏', '👏', '💪', '🤝', '❤️', '💔', '💯', '🔥', '🎉', '🌹', '🍉', '🍺', '🐶'];
+  var STATUS_POOL = ['在线', '忙碌中', '摸鱼中', '在听歌', '发呆', '出门散步', '学习中', '追剧中', '健身中', '准备休息'];
+  var DEFAULT_EMOJI_GROUP = 'eg_default';
+
+  var DB = loadDB();
+  var activeTab = 'chat';
+  var activeGroupId = null;
+  var selected = {};
+  var editingFriend = null;
+  var editingCard = null;
+  var activeFriendId = null;
+  var pendingCallGroupId = null;
+  var toastTimer = null;
+  var libSearch = '';
+  var libFilterGroup = null;
+  var libBatchMode = false;
+  var libSelected = {};
+  var replyTimer = null;
+  var typingOn = false;
+  var statusTimer = null;
+  var profileIsMe = false;
+  var editingMe = false;
+  var emojiGroupId = 'eg_default';
+  var editingEmojiGroup = null;
+  var editingEmojiImages = [];
+  var emojiTab = 'emoji';
+
+  var GROUP_COLORS = ['#FF6B6B', '#FF8E53', '#FFC542', '#51CF66', '#20C997', '#4DABF7', '#748FFC', '#DA77F2', '#F783AC', '#A9E34B', '#38D9A9', '#868E96'];
+
+  /* ================= 数据 ================= */
+  function normalizeMe(me) {
+    me = me && typeof me === 'object' ? me : {};
+    return {
+      name: typeof me.name === 'string' && me.name.trim() ? me.name : '我',
+      avatar: typeof me.avatar === 'string' ? me.avatar : '',
+      color: me.color || '#07C160',
+      region: typeof me.region === 'string' ? me.region : ''
+    };
+  }
+
+  function normalizeEmojiItem(x) {
+    if (typeof x === 'string' && x.trim()) return x.trim();
+    if (x && typeof x === 'object' && typeof x.src === 'string' && x.src) {
+      return { src: x.src, name: typeof x.name === 'string' ? x.name.slice(0, 16) : '表情' };
+    }
+    return null;
+  }
+
+  function normalizeEmojiGroups(list) {
+    var out = (Array.isArray(list) ? list : []).map(function (g) {
+      var items = (Array.isArray(g.items) ? g.items : []).map(normalizeEmojiItem).filter(Boolean);
+      return {
+        id: g.id || uid('eg_'),
+        name: g.name || '表情库',
+        items: items,
+        builtin: !!g.builtin
+      };
+    });
+    if (!out.some(function (g) { return g.builtin; })) {
+      out.unshift({ id: DEFAULT_EMOJI_GROUP, name: '默认表情', items: EMOJIS.slice(), builtin: true });
+    }
+    return out;
+  }
+
+  function loadDB() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      var d = raw ? JSON.parse(raw) : {};
+      var db = {
+        me: normalizeMe(d.me),
+        friends: Array.isArray(d.friends) ? d.friends : [],
+        groups: (Array.isArray(d.groups) ? d.groups : []).map(function (g) {
+          g.memberIds = Array.isArray(g.memberIds) ? g.memberIds : [];
+          g.messages = (Array.isArray(g.messages) ? g.messages : []).map(function (m) {
+            if (!m.type) m.type = 'text';
+            if (typeof m.mine !== 'boolean') m.mine = true;
+            return m;
+          });
+          g.pinned = !!g.pinned;
+          g.muted = !!g.muted;
+          g.bg = g.bg || 'gray';
+          return g;
+        }),
+        cards: (Array.isArray(d.cards) ? d.cards : []).map(function (c) {
+          if (typeof c.groupId !== 'string') c.groupId = null;
+          if (typeof c.disabled !== 'boolean') c.disabled = false;
+          return c;
+        }),
+        cardGroups: Array.isArray(d.cardGroups) ? d.cardGroups : [],
+        emojiGroups: normalizeEmojiGroups(d.emojiGroups),
+        settings: d.settings && typeof d.settings === 'object' ? d.settings : {}
+      };
+      var s = db.settings;
+      if (typeof s.replyDelayMin !== 'number') s.replyDelayMin = 3000;
+      if (typeof s.replyDelayMax !== 'number') s.replyDelayMax = 7000;
+      if (typeof s.typingIndicatorEnabled !== 'boolean') s.typingIndicatorEnabled = true;
+      if (!Array.isArray(s.statusPool) || !s.statusPool.length) s.statusPool = STATUS_POOL.slice();
+
+      db.friends.forEach(function (f) {
+        if (typeof f.region !== 'string') f.region = '';
+        if (typeof f.autoReply !== 'boolean') f.autoReply = true;
+        if (typeof f.status !== 'string' || !f.status) f.status = randomFrom(s.statusPool);
+        if (typeof f.statusAt !== 'number') f.statusAt = Date.now();
+        if (typeof f.statusNext !== 'number') f.statusNext = 1 + Math.random() * 7;
+      });
+      return db;
+    } catch (e) {
+      return {
+        me: normalizeMe(null),
+        friends: [],
+        groups: [],
+        cards: [],
+        cardGroups: [],
+        emojiGroups: normalizeEmojiGroups(null),
+        settings: { replyDelayMin: 3000, replyDelayMax: 7000, typingIndicatorEnabled: true, statusPool: ['在线', '忙碌中', '摸鱼中', '在听歌', '发呆', '出门散步', '学习中', '追剧中', '健身中', '准备休息'] }
+      };
+    }
+  }
+
+  function saveDB() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(DB));
+      return true;
+    } catch (e) {
+      toast('本地存储空间不足，头像可换小一点');
+      return false;
+    }
+  }
+
+  function uid(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function friendById(id) { return DB.friends.filter(function (f) { return f.id === id; })[0] || null; }
+  function groupById(id) { return DB.groups.filter(function (g) { return g.id === id; })[0] || null; }
+  function cardById(id) { return DB.cards.filter(function (c) { return c.id === id; })[0] || null; }
+  function cardGroupById(id) { return DB.cardGroups.filter(function (g) { return g.id === id; })[0] || null; }
+  function cardsByGroup(gid) { return DB.cards.filter(function (c) { return c.groupId === gid; }); }
+  function randomColor() { return GROUP_COLORS[Math.floor(Math.random() * GROUP_COLORS.length)]; }
+  function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function randomStatus() { return randomFrom(DB.settings.statusPool); }
+  function emojiGroupById(id) { return DB.emojiGroups.filter(function (g) { return g.id === id; })[0] || null; }
+  function activeEmojiGroup() { return emojiGroupById(emojiGroupId) || DB.emojiGroups[0] || null; }
+
+  /* ================= 工具 ================= */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function initial(name) { var n = (name || '').trim(); return n ? n.charAt(0) : '友'; }
+  function fmtListTime(ts) {
+    var d = new Date(ts), n = new Date();
+    if (d.toDateString() === n.toDateString()) return pad(d.getHours()) + ':' + pad(d.getMinutes());
+    var y = new Date(n.getTime() - 86400000);
+    if (d.toDateString() === y.toDateString()) return '昨天';
+    return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  }
+  function msgTimeHTML(ts) {
+    var d = new Date(ts), n = new Date();
+    var hm = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    var y = new Date(n.getTime() - 86400000);
+    var main = d.toDateString() === y.toDateString() ? '昨天 ' + hm : hm;
+    var date = (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    return '<div class="msg-time">' + main + '<em>' + date + '</em></div>';
+  }
+  function fmtDur(sec) {
+    sec = Math.max(0, Math.round(sec));
+    return pad(Math.floor(sec / 60)) + ':' + pad(sec % 60);
+  }
+  function collate(a, b) {
+    if (COLL) return COLL.compare(a, b);
+    try { return String(a).localeCompare(String(b), 'zh-Hans-CN'); }
+    catch (e) { return 0; }
+  }
+  function letterOf(name) {
+    var c = (name || '').trim().charAt(0);
+    if (!c) return '#';
+    if (/[A-Za-z]/.test(c)) return c.toUpperCase();
+    if (!/[\u4e00-\u9fa5]/.test(c)) return '#';
+    var lo = 0, hi = BOUNDS.length - 1, res = '#';
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (collate(BOUNDS[mid], c) <= 0) {
+        res = LETTERS[mid];
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return res;
+  }
+
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1600);
+  }
+
+  function avatarHTML(f, uid) {
+    var attr = uid ? ' data-uid="' + uid + '"' : '';
+    if (f && f.avatar) return '<div class="av"' + attr + '><img src="' + f.avatar + '" alt=""></div>';
+    return '<div class="av"' + attr + ' style="background:' + ((f && f.color) || '#07C160') + '">' + esc(initial(f && f.name)) + '</div>';
+  }
+
+  function groupAvatarHTML(g) {
+    var members = g.memberIds.map(friendById).filter(Boolean).slice(0, 4);
+    if (!members.length) return '<div class="gav gav-1"><span style="background:#C9C9C9">群</span></div>';
+    return '<div class="gav gav-' + members.length + '">' + members.map(function (m) {
+      if (m.avatar) return '<img src="' + m.avatar + '" alt="">';
+      return '<span style="background:' + (m.color || '#07C160') + '">' + esc(initial(m.name)) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  function groupName(members) {
+    var names = members.map(function (m) { return m.name; });
+    if (names.length === 1) return names[0];
+    if (names.length <= 3) return names.join('、');
+    return names.slice(0, 2).join('、') + '等' + names.length + '人';
+  }
+
+  function shrinkImage(file, cb) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      var size = 160;
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      var ctx = canvas.getContext('2d');
+      var side = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      cb(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
+    img.src = url;
+  }
+
+  function copyText(text) {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        toast('已复制到剪贴板');
+      } catch (e) {
+        toast('复制失败');
+      }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('已复制到剪贴板'); }, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  /* ================= 时间 ================= */
+  function renderClock() {
+    var d = new Date();
+    var t = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    $('#sbClock').textContent = t;
+    if (activeTab === 'chat') {
+      var title = $('#title');
+      if (!title.classList.contains('live')) title.classList.add('live');
+      title.textContent = t;
+    }
+  }
+  function clockLoop() {
+    renderClock();
+    setTimeout(clockLoop, 1000 - (Date.now() % 1000));
+  }
+
+  /* ================= 菜单 / 页面切换 ================= */
+  function openMenu() {
+    $('#plusMenu').classList.add('open');
+    $('#mask').classList.add('open');
+    $('#btnPlus').classList.add('active');
+  }
+  function closeMenu() {
+    $('#plusMenu').classList.remove('open');
+    $('#mask').classList.remove('open');
+    $('#btnPlus').classList.remove('active');
+  }
+
+  function switchTab(key) {
+    activeTab = key;
+    $$('.tab').forEach(function (t) { t.classList.toggle('active', t.dataset.tab === key); });
+    closeMenu();
+    $('#page-chat').classList.toggle('active', key === 'chat');
+    $('#page-contacts').classList.toggle('active', key === 'contacts');
+    $('#page-other').classList.toggle('active', key !== 'chat' && key !== 'contacts');
+    var title = $('#title');
+    if (key === 'chat') {
+      renderClock();
+    } else {
+      title.classList.remove('live');
+      title.textContent = NAMES[key];
+    }
+    if (key === 'contacts') renderContacts();
+    if (key !== 'chat' && key !== 'contacts') $('#otherTip').textContent = NAMES[key] + ' 页面待实现';
+  }
+
+  function openScreen(id) {
+    closeSheets();
+    var el = document.getElementById(id);
+    el.classList.add('open');
+    el.setAttribute('aria-hidden', 'false');
+  }
+  function closeScreen(id) {
+    var el = document.getElementById(id);
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  function openSheet(id) {
+    closeSheets();
+    closeMenu();
+    var el = document.getElementById(id);
+    el.classList.add('open');
+    el.setAttribute('aria-hidden', 'false');
+    $('#sheetMask').classList.add('open');
+  }
+  function closeSheets() {
+    $$('.sheet.open').forEach(function (s) {
+      s.classList.remove('open');
+      s.setAttribute('aria-hidden', 'true');
+    });
+    $('#sheetMask').classList.remove('open');
+  }
+
+  /* ================= 好友 ================= */
+  function openFriendsSheet() {
+    renderFriendsSheet();
+    openSheet('sheetFriends');
+  }
+
+  function renderFriendsSheet() {
+    var box = $('#friendList');
+    if (!DB.friends.length) {
+      box.innerHTML = '<div class="sheet-empty">还没有好友<br>点右上角「添加」创建</div>';
+      return;
+    }
+    box.innerHTML = DB.friends.map(function (f) {
+      return '<div class="friend-row" data-fid="' + f.id + '">' + avatarHTML(f) +
+        '<div class="friend-name">' + esc(f.name) + '</div>' +
+        '<button class="row-edit" aria-label="编辑">' + PENCIL + '</button></div>';
+    }).join('');
+  }
+
+  function openFriendEdit(f) {
+    editingMe = false;
+    editingFriend = f
+      ? { id: f.id, name: f.name, avatar: f.avatar || null, color: f.color || PRESETS[0], region: f.region || '' }
+      : { id: null, name: '', avatar: null, color: PRESETS[0], region: '' };
+    $('#friendEditTitle').textContent = f ? '编辑好友' : '添加好友';
+    $('#friendName').value = editingFriend.name;
+    $('#friendRegion').value = editingFriend.region;
+    $('#friendDelete').classList.toggle('hidden', !f);
+    renderAvatarEditor();
+    openSheet('sheetFriendEdit');
+    if (!f) setTimeout(function () { $('#friendName').focus(); }, 280);
+  }
+
+  function openMyEdit() {
+    editingMe = true;
+    editingFriend = {
+      id: null,
+      name: DB.me.name,
+      avatar: DB.me.avatar || null,
+      color: DB.me.color || PRESETS[0],
+      region: DB.me.region || ''
+    };
+    $('#friendEditTitle').textContent = '编辑我的资料';
+    $('#friendName').value = editingFriend.name;
+    $('#friendRegion').value = editingFriend.region;
+    $('#friendDelete').classList.add('hidden');
+    renderAvatarEditor();
+    openSheet('sheetFriendEdit');
+  }
+
+  function renderAvatarEditor() {
+    var box = $('#avatarPreview');
+    if (editingFriend.avatar) {
+      box.style.background = 'transparent';
+      box.innerHTML = '<img src="' + editingFriend.avatar + '" alt="">';
+    } else {
+      box.style.background = editingFriend.color;
+      box.textContent = initial(editingFriend.name);
+    }
+    $('#swatches').innerHTML = PRESETS.map(function (c) {
+      var active = (!editingFriend.avatar && c === editingFriend.color) ? ' active' : '';
+      return '<button class="swatch' + active + '" style="background:' + c + '" data-color="' + c + '" aria-label="颜色"></button>';
+    }).join('');
+  }
+
+  function saveFriend() {
+    var name = $('#friendName').value.trim();
+    if (!name) {
+      toast(editingMe ? '请输入昵称' : '请输入好友昵称');
+      $('#friendName').focus();
+      return;
+    }
+    var region = $('#friendRegion').value.trim();
+    if (editingMe) {
+      DB.me.name = name;
+      DB.me.avatar = editingFriend.avatar;
+      DB.me.color = editingFriend.color;
+      DB.me.region = region;
+      saveDB();
+      closeSheets();
+      renderProfile();
+      renderMessages();
+      toast('已保存');
+      return;
+    }
+    if (editingFriend.id) {
+      var f = friendById(editingFriend.id);
+      if (f) {
+        f.name = name;
+        f.avatar = editingFriend.avatar;
+        f.color = editingFriend.color;
+        f.region = region;
+        DB.groups.forEach(function (g) {
+          if (g.memberIds.length === 1 && g.memberIds[0] === f.id) g.name = name;
+        });
+      }
+    } else {
+      DB.friends.push({
+        id: uid('f_'),
+        name: name,
+        avatar: editingFriend.avatar,
+        color: editingFriend.color,
+        region: region,
+        createdAt: Date.now()
+      });
+    }
+    saveDB();
+    closeSheets();
+    renderChatList();
+    renderContacts();
+    renderProfile();
+    toast('已保存');
+  }
+
+  function deleteFriend() {
+    if (editingMe || !editingFriend || !editingFriend.id) return;
+    if (!confirm('删除好友「' + editingFriend.name + '」？')) return;
+    var fid = editingFriend.id;
+    DB.friends = DB.friends.filter(function (f) { return f.id !== fid; });
+    DB.groups = DB.groups.filter(function (g) {
+      g.memberIds = g.memberIds.filter(function (id) { return id !== fid; });
+      return g.memberIds.length > 0;
+    });
+    saveDB();
+    closeSheets();
+    closeScreen('pageProfile');
+    renderChatList();
+    renderContacts();
+    toast('已删除');
+  }
+
+  /* ================= 发起群聊 ================= */
+  function openGroupSheet() {
+    selected = {};
+    renderGroupSheet();
+    openSheet('sheetGroup');
+  }
+
+  function renderGroupSheet() {
+    var box = $('#groupList');
+    if (!DB.friends.length) {
+      box.innerHTML = '<div class="sheet-empty">还没有好友，先添加好友<br><button class="empty-btn" id="emptyAddFriend">去添加好友</button></div>';
+    } else {
+      box.innerHTML = DB.friends.map(function (f) {
+        var on = selected[f.id] ? ' selected' : '';
+        return '<div class="pick' + on + '" data-fid="' + f.id + '">' + avatarHTML(f) +
+          '<div class="pick-name">' + esc(f.name) + '</div><span class="check"></span></div>';
+      }).join('');
+    }
+    $('#groupDone').disabled = !Object.keys(selected).length;
+  }
+
+  function createGroupFromSelection() {
+    var members = Object.keys(selected).map(friendById).filter(Boolean);
+    if (!members.length) return;
+    var group;
+    if (members.length === 1) {
+      group = groupById(findOrCreateSingle(members[0].id));
+    } else {
+      group = {
+        id: uid('g_'),
+        name: groupName(members),
+        memberIds: members.map(function (m) { return m.id; }),
+        createdAt: Date.now(),
+        messages: [],
+        pinned: false,
+        muted: false,
+        bg: 'gray'
+      };
+      DB.groups.unshift(group);
+      saveDB();
+    }
+    closeSheets();
+    renderChatList();
+    if (group) openChat(group.id);
+  }
+
+  /* ================= 通讯录 ================= */
+  function renderContacts() {
+    var box = $('#contactsList');
+    var byLetter = {};
+    DB.friends.forEach(function (f) {
+      var l = letterOf(f.name);
+      (byLetter[l] = byLetter[l] || []).push(f);
+    });
+    var letters = Object.keys(byLetter).sort(function (a, b) {
+      if (a === '#') return 1;
+      if (b === '#') return -1;
+      return a < b ? -1 : 1;
+    });
+    letters.forEach(function (l) {
+      byLetter[l].sort(function (a, b) { return collate(a.name, b.name); });
+    });
+    var html = '<div class="contacts-tool">' +
+      '<div class="tool-row" id="newFriendRow">' +
+      '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#FE9C1E" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="8.6" r="3.6"/><path d="M3.6 19.4c.5-3.3 3-5.4 6.4-5.4 1 0 1.8.2 2.6.6"/><path d="M18 12.6v6M15 15.6h6"/></svg>' +
+      '<span>新的朋友</span></div></div>';
+    letters.forEach(function (l) {
+      html += '<div class="group-letter" id="grp-' + l + '">' + l + '</div>';
+      byLetter[l].forEach(function (f) {
+        html += '<div class="contact-row" data-fid="' + f.id + '">' + avatarHTML(f) +
+          '<div class="contact-name">' + esc(f.name) + '</div></div>';
+      });
+    });
+    if (!DB.friends.length) html += '<div class="library-empty">还没有好友<br>点右上角「+」添加朋友</div>';
+    box.innerHTML = html;
+
+    var rail = $('#indexRail');
+    if (!letters.length) {
+      rail.innerHTML = '';
+      rail.classList.add('hidden');
+    } else {
+      rail.classList.remove('hidden');
+      rail.innerHTML = letters.map(function (l) {
+        return '<span data-letter="' + l + '">' + l + '</span>';
+      }).join('');
+    }
+  }
+
+  /* ================= 好友资料 ================= */
+  function openProfile(fid) {
+    var f = friendById(fid);
+    if (!f) return;
+    profileIsMe = false;
+    activeFriendId = fid;
+    renderProfile();
+    openScreen('pageProfile');
+  }
+
+  function openMyProfile() {
+    profileIsMe = true;
+    activeFriendId = null;
+    renderProfile();
+    openScreen('pageProfile');
+  }
+
+  function renderProfile() {
+    var f = profileIsMe ? DB.me : friendById(activeFriendId);
+    if (!f) return;
+    $('#profileName').textContent = f.name;
+    $('#profileRegion').textContent = f.region || '未设置';
+    var av = $('#profileAvatar');
+    if (f.avatar) {
+      av.style.background = 'transparent';
+      av.innerHTML = '<img src="' + f.avatar + '" alt="">';
+    } else {
+      av.style.background = f.color || '#07C160';
+      av.innerHTML = esc(initial(f.name));
+    }
+    $('#profileChat').classList.toggle('hidden', profileIsMe);
+    $('#profileCall').classList.toggle('hidden', profileIsMe);
+  }
+
+  function openRegionSheet() {
+    var f = profileIsMe ? DB.me : friendById(activeFriendId);
+    if (!f) return;
+    $('#regionInput').value = f.region || '';
+    openSheet('sheetRegion');
+    setTimeout(function () { $('#regionInput').focus(); }, 260);
+  }
+
+  function saveRegion() {
+    var f = profileIsMe ? DB.me : friendById(activeFriendId);
+    if (!f) return;
+    f.region = $('#regionInput').value.trim();
+    saveDB();
+    renderProfile();
+    closeSheets();
+    toast('地区已更新');
+  }
+
+  function findOrCreateSingle(fid) {
+    var f = friendById(fid);
+    var g = DB.groups.filter(function (x) {
+      return x.memberIds.length === 1 && x.memberIds[0] === fid;
+    })[0];
+    if (!g) {
+      g = {
+        id: uid('g_'),
+        name: f ? f.name : '聊天',
+        memberIds: [fid],
+        createdAt: Date.now(),
+        messages: [],
+        pinned: false,
+        muted: false,
+        bg: 'gray'
+      };
+      DB.groups.unshift(g);
+      saveDB();
+    }
+    return g.id;
+  }
+
+  /* ================= 会话列表 ================= */
+  function sortedGroups() {
+    return DB.groups.slice().sort(function (a, b) {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      var la = a.messages.length ? a.messages[a.messages.length - 1].ts : a.createdAt;
+      var lb = b.messages.length ? b.messages[b.messages.length - 1].ts : b.createdAt;
+      return lb - la;
+    });
+  }
+
+  function previewOf(m) {
+    if (!m) return '';
+    if (m.type === 'voice') return '[语音] ' + (m.dur || 1) + '"';
+    if (m.type === 'sticker') return '[动画表情]';
+    if (m.type === 'card') return '[字卡] ' + (m.title || m.text || '');
+    if (m.type === 'call') return m.text;
+    return m.text;
+  }
+
+  function renderChatList() {
+    var list = $('#chatList');
+    var groups = sortedGroups();
+    if (!groups.length) {
+      list.innerHTML = '<div class="library-empty">还没有聊天<br>点右上角「+」「发起群聊」开始</div>';
+      return;
+    }
+    list.innerHTML = groups.map(function (g) {
+      var last = g.messages[g.messages.length - 1];
+      var sub = last ? previewOf(last) : g.memberIds.length + ' 人';
+      return '<div class="cell" data-gid="' + g.id + '">' + groupAvatarHTML(g) +
+        '<div class="cell-main"><div class="cell-title">' + (g.muted ? '<span class="muted-ico">🔕</span> ' : '') + esc(g.name) + '</div>' +
+        '<div class="cell-sub">' + esc(sub) + '</div></div>' +
+        '<div class="cell-time">' + (last ? fmtListTime(last.ts) : '') + '</div></div>';
+    }).join('');
+  }
+
+  /* ================= 聊天详情 ================= */
+  function openChat(id) {
+    var g = groupById(id);
+    if (!g) return;
+    if (replyTimer) { clearTimeout(replyTimer); replyTimer = null; }
+    hideTyping();
+    activeGroupId = id;
+    typingOn = false;
+    updateChatHeader();
+    $('#msgInput').value = '';
+    setVoiceMode(false);
+    closePanels();
+    updateSendState();
+    applyBg(g.bg);
+    renderMessages();
+    openScreen('pageChatDetail');
+    setTimeout(scrollMessages, 80);
+  }
+
+  function applyBg(bg) {
+    var area = $('#msgArea');
+    area.classList.remove('bg-gray', 'bg-white', 'bg-warm');
+    area.classList.add('bg-' + (bg || 'gray'));
+  }
+
+  function renderMessages() {
+    var g = groupById(activeGroupId);
+    if (!g) return;
+    var area = $('#msgArea');
+    if (!g.messages.length) {
+      area.innerHTML = '<div class="chat-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M20.5 4.5H3.5c-.6 0-1 .4-1 1v9c0 .6.4 1 1 1h6.7l3.6 3.4v-3.4h6.7c.6 0 1-.4 1-1v-9c0-.6-.4-1-1-1z"/></svg><div>打个招呼吧</div></div>';
+      return;
+    }
+    var html = '', prev = 0;
+    g.messages.forEach(function (m) {
+      if (m.ts - prev > 5 * 60 * 1000) html += msgTimeHTML(m.ts);
+      prev = m.ts;
+      html += bubbleHTML(m);
+    });
+    area.innerHTML = html;
+  }
+
+  function bubbleHTML(m) {
+    var inner;
+    if (m.type === 'voice') {
+      inner = '<div class="bubble voice" data-play="1"><span class="voice-bars"><i></i><i></i><i></i></span><span class="voice-len">' + (m.dur || 1) + '"</span></div>';
+    } else if (m.type === 'sticker') {
+      if (m.sticker) {
+        inner = '<div class="bubble sticker pic"><img src="' + m.sticker + '" alt=""></div>';
+      } else {
+        var long = Array.from(String(m.text || '')).length > 2;
+        inner = '<div class="bubble sticker' + (long ? ' sm' : '') + '">' + esc(m.text) + '</div>';
+      }
+    } else if (m.type === 'card') {
+      inner = '<div class="bubble card"><div class="cd-title">' + esc(m.title || '字卡') + '</div><div class="cd-text">' + esc(m.text) + '</div></div>';
+    } else if (m.type === 'call') {
+      inner = '<div class="call-note">' + PHONE_ICO + '<span>' + esc(m.text) + '</span></div>';
+    } else {
+      inner = '<div class="bubble">' + esc(m.text) + '</div>';
+    }
+    var mine = m.mine !== false;
+    var cls = mine ? 'mine' : 'their';
+    var av;
+    if (mine) {
+      av = avatarHTML(DB.me, '__me__');
+    } else {
+      var f = (m.senderId ? friendById(m.senderId) : null) || singleFriend() || { name: '友', color: '#9AA7B4' };
+      av = avatarHTML(f, f.id || '');
+    }
+    var body = '<div class="msg-body">' + inner + '</div>';
+    return '<div class="msg ' + cls + '" data-mid="' + m.id + '">' + (mine ? body + av : av + body) + '</div>';
+  }
+
+  function updateChatHeader() {
+    var g = groupById(activeGroupId);
+    if (!g) return;
+    $('#chatTitle').textContent = typingOn ? '对方正在输入…' : g.name;
+    $('#chatCount').textContent = g.memberIds.length > 1 ? '(' + g.memberIds.length + ')' : '';
+    var st = $('#chatStatus');
+    var f = g.memberIds.length === 1 ? friendById(g.memberIds[0]) : null;
+    if (f && f.status) {
+      st.textContent = f.status;
+      st.classList.remove('hidden');
+    } else {
+      st.classList.add('hidden');
+    }
+  }
+
+  function singleFriend() {
+    var g = groupById(activeGroupId);
+    if (!g || g.memberIds.length !== 1) return null;
+    return friendById(g.memberIds[0]);
+  }
+
+  function scrollMessages() {
+    var area = $('#msgArea');
+    area.scrollTop = area.scrollHeight;
+  }
+
+  function updateSendState() {
+    var has = !!$('#msgInput').value.trim();
+    $('#sendBtn').classList.toggle('hidden', !has);
+    $('#compMic').classList.toggle('hidden', has);
+    $('#sendBtn').disabled = !has;
+  }
+
+  function sendMsg(m) {
+    var g = groupById(activeGroupId);
+    if (!g) return;
+    m.id = m.id || uid('m_');
+    m.ts = m.ts || Date.now();
+    if (typeof m.mine !== 'boolean') m.mine = true;
+    g.messages.push(m);
+    saveDB();
+    renderMessages();
+    renderChatList();
+    scrollMessages();
+    if (m.mine) triggerAutoReply();
+  }
+
+  function sendText() {
+    var text = $('#msgInput').value.trim();
+    if (!text) return;
+    $('#msgInput').value = '';
+    updateSendState();
+    sendMsg({ type: 'text', text: text });
+  }
+
+  /* ================= 自动回复 ================= */
+  function getReplyPool() {
+    var disabledGroups = {};
+    DB.cardGroups.forEach(function (g) { if (g.disabled) disabledGroups[g.id] = true; });
+    return DB.cards.filter(function (c) {
+      if (c.disabled) return false;
+      if (c.groupId && disabledGroups[c.groupId]) return false;
+      return true;
+    });
+  }
+
+  function showTyping(friend) {
+    if (!DB.settings.typingIndicatorEnabled) return;
+    if (!friend) friend = singleFriend();
+    if (!friend) return;
+    typingOn = true;
+    updateChatHeader();
+  }
+
+  function hideTyping() {
+    typingOn = false;
+    updateChatHeader();
+  }
+
+  function triggerAutoReply() {
+    var g = groupById(activeGroupId);
+    if (!g || g.memberIds.length !== 1) return;
+    var f = friendById(g.memberIds[0]);
+    if (!f || !f.autoReply) return;
+    var pool = getReplyPool();
+    if (!pool.length) return;
+
+    if (replyTimer) { clearTimeout(replyTimer); replyTimer = null; }
+    hideTyping();
+
+    if (DB.settings.typingIndicatorEnabled) showTyping(f);
+
+    var range = Math.max(0, DB.settings.replyDelayMax - DB.settings.replyDelayMin);
+    var delay = DB.settings.replyDelayMin + Math.random() * range;
+    replyTimer = setTimeout(function () {
+      replyTimer = null;
+      hideTyping();
+      var card = pool[Math.floor(Math.random() * pool.length)];
+      var g2 = groupById(activeGroupId);
+      if (!g2) return;
+      g2.messages.push({
+        id: uid('m_'),
+        type: 'text',
+        text: card.content,
+        ts: Date.now(),
+        mine: false,
+        senderId: f.id
+      });
+      saveDB();
+      renderMessages();
+      renderChatList();
+      scrollMessages();
+    }, delay);
+  }
+
+  function tickStatuses() {
+    var now = Date.now();
+    var changed = false, activeChanged = false;
+    var g = groupById(activeGroupId);
+    var activeFid = g && g.memberIds.length === 1 ? g.memberIds[0] : null;
+    DB.friends.forEach(function (f) {
+      if (now - f.statusAt >= f.statusNext * 3600000) {
+        f.status = randomStatus();
+        f.statusAt = now;
+        f.statusNext = 1 + Math.random() * 7;
+        changed = true;
+        if (f.id === activeFid) activeChanged = true;
+      }
+    });
+    if (changed) {
+      saveDB();
+      if (activeChanged) updateChatHeader();
+      if (profileIsMe === false && activeFriendId) renderProfile();
+    }
+    statusTimer = setTimeout(tickStatuses, 60000);
+  }
+
+  /* ================= 语音 ================= */
+  var recStart = 0, recTimer = null;
+
+  function setVoiceMode(on) {
+    voiceMode = !!on;
+    $('#msgInput').classList.toggle('hidden', voiceMode);
+    $('#compMic').classList.add('hidden');
+    $('#holdTalk').classList.toggle('hidden', !voiceMode);
+    $('#icoVoice').classList.toggle('hidden', voiceMode);
+    $('#icoKeyboard').classList.toggle('hidden', !voiceMode);
+    if (voiceMode) {
+      $('#sendBtn').classList.add('hidden');
+      closePanels();
+    } else {
+      updateSendState();
+    }
+  }
+
+  function startRec(e) {
+    if (recStart) return;
+    if (e && e.cancelable) e.preventDefault();
+    recStart = Date.now();
+    $('#holdTalk').classList.add('active');
+    $('#recOverlay').classList.remove('hidden');
+    $('#recTime').textContent = '0:00';
+    clearInterval(recTimer);
+    recTimer = setInterval(function () {
+      var s = Math.floor((Date.now() - recStart) / 1000);
+      $('#recTime').textContent = '0:' + pad(s);
+    }, 200);
+  }
+
+  function stopRec(cancel) {
+    if (!recStart) return;
+    var ms = Date.now() - recStart;
+    recStart = 0;
+    clearInterval(recTimer);
+    $('#holdTalk').classList.remove('active');
+    $('#recOverlay').classList.add('hidden');
+    if (cancel) return;
+    if (ms < 600) {
+      toast('说话时间太短');
+      return;
+    }
+    sendMsg({ type: 'voice', text: '[语音]', dur: Math.max(1, Math.round(ms / 1000)) });
+  }
+
+  /* ================= 表情 / 字卡面板 ================= */
+  var voiceMode = false;
+  var plusPage = 0;
+  var libraryFromChat = false;
+  var callState = null;
+
+  function closePanels() {
+    $('#emojiPanel').classList.add('hidden');
+    $('#plusPanel').classList.add('hidden');
+    $('#emojiToggle').classList.remove('active');
+    $('#plusToggle').classList.remove('active');
+  }
+
+  function openEmojiPanel() {
+    if (voiceMode) setVoiceMode(false);
+    $('#msgInput').blur();
+    $('#plusPanel').classList.add('hidden');
+    $('#plusToggle').classList.remove('active');
+    $('#emojiPanel').classList.remove('hidden');
+    $('#emojiToggle').classList.add('active');
+    switchEmojiTab('emoji');
+  }
+
+  function switchEmojiTab(tab) {
+    emojiTab = tab;
+    $$('.panel-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.etab === tab); });
+    $('#emojiLibBar').classList.toggle('hidden', tab !== 'emoji');
+    $('#emojiGrid').classList.toggle('hidden', tab !== 'emoji');
+    $('#cardPick').classList.toggle('hidden', tab !== 'cards');
+    $('#manageCards').classList.remove('hidden');
+    if (tab === 'cards') renderCardPick();
+    else { renderEmojiLibBar(); renderEmojiGrid(); }
+  }
+
+  function renderEmojiLibBar() {
+    var bar = $('#emojiLibBar');
+    var html = DB.emojiGroups.map(function (g) {
+      return '<button class="chip' + (g.id === emojiGroupId ? ' active' : '') + '" data-egid="' + g.id + '">' + esc(g.name) + '</button>';
+    }).join('');
+    html += '<button class="chip add" data-egid="__mgr__">＋ 新建</button>';
+    bar.innerHTML = html;
+  }
+
+  function renderEmojiGrid() {
+    var grid = $('#emojiGrid');
+    var g = activeEmojiGroup();
+    if (!g) { grid.innerHTML = ''; return; }
+    grid.classList.toggle('img-grid', g.items.some(function (it) { return it && typeof it === 'object'; }));
+    if (!g.items.length) {
+      grid.innerHTML = '<div class="emoji-empty">这个表情库还是空的<br>点上方「＋ 新建」或「管理」添加</div>';
+      return;
+    }
+    grid.innerHTML = g.items.map(function (it, idx) {
+      if (typeof it === 'string') return '<button data-emoji="' + esc(it) + '">' + esc(it) + '</button>';
+      return '<button class="eg-img" data-emoji-img="' + idx + '"><img src="' + it.src + '" alt=""><span>' + esc(it.name) + '</span></button>';
+    }).join('');
+  }
+
+  function openEmojiMgr() {
+    renderEmojiMgr();
+    openSheet('sheetEmojiMgr');
+  }
+
+  function renderEmojiMgr() {
+    var box = $('#emojiMgrList');
+    box.innerHTML = DB.emojiGroups.map(function (g) {
+      var first = g.items[0];
+      var ico = !first ? '🙂' : (typeof first === 'string' ? esc(first) : '<img src="' + first.src + '" alt="">');
+      return '<div class="emoji-mgr-row" data-egid="' + g.id + '">' +
+        '<div class="emoji-mgr-ico">' + ico + '</div>' +
+        '<div class="emoji-mgr-name">' + esc(g.name) + '</div>' +
+        (g.builtin ? '<span class="emoji-mgr-badge">默认</span>' : '') +
+        '<span class="emoji-mgr-count">' + g.items.length + ' 个</span></div>';
+    }).join('');
+  }
+
+  function openEmojiEdit(g) {
+    editingEmojiGroup = g
+      ? { id: g.id, name: g.name, builtin: !!g.builtin }
+      : { id: null, name: '', builtin: false };
+    editingEmojiImages = g ? g.items.filter(function (it) { return it && typeof it === 'object'; }).map(function (it) {
+      return { src: it.src, name: it.name };
+    }) : [];
+    $('#emojiGroupTitle').textContent = g ? (g.builtin ? '默认表情' : '编辑表情库') : '新建表情库';
+    $('#emojiGroupName').value = editingEmojiGroup.name;
+    $('#emojiItems').value = g ? g.items.filter(function (it) { return typeof it === 'string'; }).join('\n') : '';
+    renderEmojiImgList();
+    $('#emojiGroupDelete').classList.toggle('hidden', !g || !!g.builtin);
+    openSheet('sheetEmojiEdit');
+    if (!g) setTimeout(function () { $('#emojiGroupName').focus(); }, 260);
+  }
+
+  function renderEmojiImgList() {
+    var box = $('#emojiImgList');
+    if (!editingEmojiImages.length) {
+      box.innerHTML = '<div class="emoji-img-empty">还没有图片表情</div>';
+      return;
+    }
+    box.innerHTML = editingEmojiImages.map(function (it, i) {
+      return '<div class="emoji-img-row" data-idx="' + i + '">' +
+        '<img src="' + it.src + '" alt="">' +
+        '<input class="emoji-img-name" data-idx="' + i + '" maxlength="16" value="' + esc(it.name) + '" placeholder="表情名称">' +
+        '<button class="emoji-img-del" data-idx="' + i + '" aria-label="删除">×</button></div>';
+    }).join('');
+  }
+
+  function saveEmojiGroup() {
+    var name = $('#emojiGroupName').value.trim();
+    if (!name) { toast('请输入表情库名称'); $('#emojiGroupName').focus(); return; }
+    var seen = {};
+    var textItems = $('#emojiItems').value.split('\n').map(function (s) { return s.trim(); }).filter(function (s) {
+      if (!s || seen[s]) return false;
+      seen[s] = true;
+      return true;
+    });
+    var imgItems = editingEmojiImages.map(function (it) {
+      return { src: it.src, name: (it.name || '').trim() || '表情' };
+    });
+    var items = textItems.concat(imgItems);
+    if (editingEmojiGroup.id) {
+      var g = emojiGroupById(editingEmojiGroup.id);
+      if (g) { g.name = name; g.items = items; }
+    } else {
+      var ng = { id: uid('eg_'), name: name, items: items, builtin: false };
+      DB.emojiGroups.push(ng);
+      emojiGroupId = ng.id;
+    }
+    saveDB();
+    renderEmojiLibBar();
+    renderEmojiGrid();
+    closeSheets();
+    openEmojiMgr();
+    toast('已保存');
+  }
+
+  function deleteEmojiGroup() {
+    if (!editingEmojiGroup || !editingEmojiGroup.id) return;
+    var target = emojiGroupById(editingEmojiGroup.id);
+    if (!target || target.builtin) return;
+    if (!confirm('删除表情库「' + target.name + '」？')) return;
+    DB.emojiGroups = DB.emojiGroups.filter(function (x) { return x.id !== target.id; });
+    if (emojiGroupId === target.id) emojiGroupId = DEFAULT_EMOJI_GROUP;
+    saveDB();
+    closeSheets();
+    renderEmojiLibBar();
+    renderEmojiGrid();
+    openEmojiMgr();
+    toast('已删除表情库');
+  }
+
+  function importEmojiFile(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var text = String(reader.result || '');
+      var items;
+      try {
+        var data = JSON.parse(text);
+        if (Array.isArray(data)) items = data.map(String);
+        else if (data && Array.isArray(data.items)) items = data.items.map(String);
+        else items = text.split(/\r?\n/);
+      } catch (e) {
+        items = text.split(/\r?\n/);
+      }
+      items = items.map(function (s) { return s.trim(); }).filter(Boolean);
+      if (!items.length) { toast('文件里没有可导入的表情'); return; }
+      var seen = {};
+      var merged = $('#emojiItems').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean).concat(items).filter(function (s) {
+        if (seen[s]) return false;
+        seen[s] = true;
+        return true;
+      });
+      $('#emojiItems').value = merged.join('\n');
+      toast('已导入 ' + items.length + ' 个表情，记得保存');
+    };
+    reader.onerror = function () { toast('文件读取失败'); };
+    reader.readAsText(file);
+  }
+
+  function shrinkStickerImage(file, cb) {
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function () {
+      var max = 140;
+      var scale = Math.min(1, max / Math.max(img.width, img.height));
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      var out;
+      try { out = canvas.toDataURL('image/webp', 0.86); } catch (e) { out = canvas.toDataURL('image/png'); }
+      cb(out);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
+    img.src = url;
+  }
+
+  function importEmojiImages(files) {
+    var list = Array.prototype.slice.call(files || []);
+    if (!list.length) return;
+    var remain = list.length, added = 0;
+    list.forEach(function (file) {
+      shrinkStickerImage(file, function (src) {
+        if (src) {
+          var name = file.name.replace(/\.[^.]+$/, '').slice(0, 16) || '表情';
+          editingEmojiImages.push({ src: src, name: name });
+          added++;
+        }
+        if (--remain === 0) {
+          renderEmojiImgList();
+          toast(added ? '已导入 ' + added + ' 张图片，命名后记得保存' : '图片处理失败');
+        }
+      });
+    });
+  }
+
+  var cardPickFilter = null;
+  function renderCardPick() {
+    var filterBox = $('#cardPickFilter');
+    var list = $('#cardPickList');
+    var disabledGroups = {};
+    DB.cardGroups.forEach(function (g) { if (g.disabled) disabledGroups[g.id] = true; });
+    var available = DB.cards.filter(function (c) { return !c.disabled && !(c.groupId && disabledGroups[c.groupId]); });
+
+    var filterHtml = '<button class="chip' + (cardPickFilter === null ? ' active' : '') + '" data-gid="">全部</button>';
+    DB.cardGroups.forEach(function (g) {
+      if (g.disabled) return;
+      filterHtml += '<button class="chip' + (cardPickFilter === g.id ? ' active' : '') + '" data-gid="' + g.id + '"><span class="dot" style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + g.color + ';margin-right:3px;vertical-align:middle"></span>' + esc(g.name) + '</button>';
+    });
+    filterBox.innerHTML = filterHtml;
+
+    var cards = available.filter(function (c) {
+      return cardPickFilter === null || c.groupId === cardPickFilter;
+    });
+    if (!cards.length) {
+      list.innerHTML = '<div class="library-empty">字卡库还是空的<br>点右上角「管理」新建</div>';
+      return;
+    }
+    list.innerHTML = cards.map(function (c) {
+      return '<button class="card-pick-item" data-cid="' + c.id + '"><b>' + esc(c.title || '未命名字卡') +
+        '</b><span>' + esc(c.content) + '</span></button>';
+    }).join('');
+  }
+
+  function setPlusPage(p) {
+    plusPage = p ? 1 : 0;
+    $('#plusTrack').style.transform = 'translateX(-' + (plusPage * 50) + '%)';
+    $$('#plusDots i').forEach(function (d, i) { d.classList.toggle('active', i === plusPage); });
+  }
+
+  function openPlusPanel() {
+    if (voiceMode) setVoiceMode(false);
+    $('#msgInput').blur();
+    $('#emojiPanel').classList.add('hidden');
+    $('#emojiToggle').classList.remove('active');
+    $('#plusPanel').classList.remove('hidden');
+    $('#plusToggle').classList.add('active');
+    setPlusPage(plusPage);
+  }
+
+  function onPlusAction(key) {
+    if (key === 'video') {
+      openCallOptions(activeGroupId);
+      return;
+    }
+    var tips = {
+      album: '相册：暂未接入图片消息',
+      camera: '拍摄：暂未接入相机',
+      location: '位置：功能待开发',
+      redpacket: '红包：功能待开发',
+      gift: '礼物：功能待开发',
+      transfer: '转账：功能待开发',
+      voiceinput: '语音输入：功能待开发',
+      favorite: '收藏：功能待开发',
+      contact: '个人名片：功能待开发',
+      file: '文件：功能待开发',
+      music: '音乐：功能待开发'
+    };
+    toast(tips[key] || '功能待开发');
+  }
+
+  /* ================= 消息设置 ================= */
+  function openChatSettings() {
+    var g = groupById(activeGroupId);
+    if (!g) return;
+    $('#swPinned').classList.toggle('active', !!g.pinned);
+    $('#swMuted').classList.toggle('active', !!g.muted);
+    $$('#bgSwatches .bg-swatch').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.bg === (g.bg || 'gray'));
+    });
+    var isSingle = g.memberIds.length === 1;
+    var autoRow = $('#autoReplyRow');
+    if (isSingle) {
+      var f = friendById(g.memberIds[0]);
+      autoRow.classList.remove('hidden');
+      $('#swAutoReply').classList.toggle('active', !!(f && f.autoReply));
+    } else {
+      autoRow.classList.add('hidden');
+    }
+    openSheet('sheetChatSettings');
+  }
+
+  function openAppSettings() {
+    $('#swTyping').classList.toggle('active', !!DB.settings.typingIndicatorEnabled);
+    $('#delayMin').value = DB.settings.replyDelayMin;
+    $('#delayMax').value = DB.settings.replyDelayMax;
+    openSheet('sheetAppSettings');
+  }
+
+  /* ================= 音视频通话 ================= */
+  function openCallOptions(gid) {
+    pendingCallGroupId = gid || activeGroupId;
+    if (!pendingCallGroupId) {
+      toast('请先选择聊天');
+      return;
+    }
+    openSheet('sheetCallOptions');
+  }
+
+  function startCall(mode) {
+    var g = groupById(pendingCallGroupId || activeGroupId);
+    if (!g) return;
+    closeSheets();
+    var members = g.memberIds.map(friendById).filter(Boolean);
+    var target = members.length === 1 ? members[0] : null;
+    callState = { gid: g.id, mode: mode, connected: false, startTs: 0, timer: null, connectTimer: null };
+
+    $('#callName').textContent = g.name;
+    var av = $('#callAvatar');
+    if (target && target.avatar) {
+      av.style.background = 'transparent';
+      av.innerHTML = '<img src="' + target.avatar + '" alt="">';
+    } else if (target) {
+      av.style.background = target.color || '#07C160';
+      av.innerHTML = esc(initial(target.name));
+    } else {
+      av.style.background = '#3E4E48';
+      av.innerHTML = esc(initial(g.name));
+    }
+    $('#callStatus').textContent = '正在呼叫…';
+    $$('.call-btn').forEach(function (b) { b.classList.remove('active'); });
+    var screen = $('#callScreen');
+    screen.classList.toggle('video', mode === 'video');
+    screen.classList.add('open');
+    screen.setAttribute('aria-hidden', 'false');
+
+    callState.connectTimer = setTimeout(connectCall, 2200);
+  }
+
+  function connectCall() {
+    if (!callState) return;
+    callState.connected = true;
+    callState.startTs = Date.now();
+    $('#callStatus').textContent = '00:00';
+    callState.timer = setInterval(function () {
+      if (!callState) return;
+      $('#callStatus').textContent = fmtDur((Date.now() - callState.startTs) / 1000);
+    }, 1000);
+  }
+
+  function hangupCall() {
+    if (!callState) return;
+    var st = callState;
+    clearTimeout(st.connectTimer);
+    clearInterval(st.timer);
+    callState = null;
+
+    var screen = $('#callScreen');
+    screen.classList.remove('open', 'video');
+    screen.setAttribute('aria-hidden', 'true');
+
+    var g = groupById(st.gid);
+    if (!g) return;
+    var label = st.mode === 'video' ? '视频通话' : '语音通话';
+    var text = st.connected
+      ? label + ' 通话时长 ' + fmtDur((Date.now() - st.startTs) / 1000)
+      : label + ' 已取消';
+    g.messages.push({ id: uid('m_'), type: 'call', text: text, ts: Date.now() });
+    saveDB();
+    renderChatList();
+    if (activeGroupId === g.id) {
+      renderMessages();
+      scrollMessages();
+    }
+  }
+
+  /* ================= 字卡库 ================= */
+  function openLibrary(fromChat) {
+    libraryFromChat = !!fromChat;
+    libSearch = '';
+    libFilterGroup = null;
+    libBatchMode = false;
+    libSelected = {};
+    $('#libSearchBar').classList.add('hidden');
+    $('#libSearchInput').value = '';
+    $('#libBatchBar').classList.add('hidden');
+    renderLibrary();
+    openScreen('pageLibrary');
+  }
+
+  function closeLibrary() {
+    closeScreen('pageLibrary');
+    if (libraryFromChat) {
+      libraryFromChat = false;
+      openEmojiPanel();
+      switchEmojiTab('cards');
+    }
+  }
+
+  function filteredCards() {
+    var q = libSearch.trim().toLowerCase();
+    return DB.cards.filter(function (c) {
+      if (libFilterGroup !== null && c.groupId !== libFilterGroup) return false;
+      if (!q) return true;
+      return (c.title || '').toLowerCase().indexOf(q) >= 0 || (c.content || '').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  function renderFilterBar() {
+    var bar = $('#libFilterBar');
+    var allCount = DB.cards.length;
+    var html = '<button class="chip' + (libFilterGroup === null ? ' active' : '') + '" data-gid="">全部 ' + allCount + '</button>';
+    DB.cardGroups.forEach(function (g) {
+      var count = cardsByGroup(g.id).length;
+      html += '<button class="chip' + (libFilterGroup === g.id ? ' active' : '') + (g.disabled ? ' disabled' : '') + '" data-gid="' + g.id + '" style="color:' + g.color + ';border-color:' + g.color + '40">' +
+        '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + g.color + ';margin-right:4px;vertical-align:middle"></span>' + esc(g.name) + ' ' + count + '</button>';
+    });
+    var noGroup = DB.cards.filter(function (c) { return !c.groupId; }).length;
+    if (noGroup) html += '<button class="chip' + (libFilterGroup === '' ? ' active' : '') + '" data-gid="__none__">未分组 ' + noGroup + '</button>';
+    bar.innerHTML = html;
+  }
+
+  function renderLibrary() {
+    renderFilterBar();
+    var box = $('#cardList');
+    var cards = filteredCards();
+    if (!DB.cards.length) {
+      box.innerHTML = '<div class="library-empty">字卡库还是空的<br><button class="empty-btn" id="emptyNewCard">新建字卡</button></div>';
+      return;
+    }
+    if (!cards.length) {
+      box.innerHTML = '<div class="library-empty">没有匹配的字卡</div>';
+      return;
+    }
+    box.innerHTML = cards.map(function (c) {
+      var grp = c.groupId ? cardGroupById(c.groupId) : null;
+      var badge = grp ? '<span class="card-badge" style="background:' + grp.color + '18;color:' + grp.color + ';border-color:' + grp.color + '40"><span style="width:5px;height:5px;border-radius:50%;background:' + grp.color + '"></span>' + esc(grp.name) + '</span>' : '';
+      var sel = libSelected[c.id] ? ' selected' : '';
+      var dis = c.disabled ? ' disabled' : '';
+      var batchCls = libBatchMode ? ' batch' + sel : '';
+      var check = libBatchMode ? '<span class="card-check"></span>' : '';
+      return '<div class="card-row' + batchCls + dis + '" data-cid="' + c.id + '">' + check + '<div class="card-main">' +
+        '<div class="card-title">' + esc(c.title || '未命名字卡') + '</div>' +
+        '<div class="card-text">' + esc(c.content) + '</div>' + badge + '</div>' +
+        (libBatchMode ? '' : '<button class="row-edit" aria-label="编辑">' + PENCIL + '</button>') + '</div>';
+    }).join('');
+  }
+
+  function updateBatchBar() {
+    var n = Object.keys(libSelected).length;
+    $('#libBatchBar').classList.toggle('hidden', !libBatchMode);
+    $('.lib-batch-count').textContent = '已选 ' + n + ' 项';
+  }
+
+  function toggleBatchMode() {
+    libBatchMode = !libBatchMode;
+    libSelected = {};
+    updateBatchBar();
+    renderLibrary();
+  }
+
+  function openCardEdit(c) {
+    editingCard = c
+      ? { id: c.id, title: c.title || '', content: c.content || '', groupId: c.groupId || null }
+      : { id: null, title: '', content: '', groupId: libFilterGroup && libFilterGroup !== '__none__' && libFilterGroup !== '' ? libFilterGroup : null };
+    $('#cardEditTitle').textContent = c ? '编辑字卡' : '新建字卡';
+    $('#cardTitle').value = editingCard.title;
+    $('#cardContent').value = editingCard.content;
+    $('#cardDelete').classList.toggle('hidden', !c);
+    renderCardGroupChips();
+    openSheet('sheetCardEdit');
+    setTimeout(function () { $('#cardContent').focus(); }, 280);
+  }
+
+  function renderCardGroupChips() {
+    var box = $('#cardGroupChips');
+    var html = '<button class="chip' + (!editingCard.groupId ? ' active' : '') + '" data-gid="">未分组</button>';
+    DB.cardGroups.forEach(function (g) {
+      var active = editingCard.groupId === g.id ? ' active' : '';
+      html += '<button class="chip' + active + '" data-gid="' + g.id + '"><span class="dot" style="background:' + g.color + '"></span>' + esc(g.name) + '</button>';
+    });
+    box.innerHTML = html;
+  }
+
+  function saveCard() {
+    var title = $('#cardTitle').value.trim();
+    var content = $('#cardContent').value.trim();
+    if (!content) {
+      toast('写点内容再保存');
+      $('#cardContent').focus();
+      return;
+    }
+    if (editingCard.id) {
+      var c = cardById(editingCard.id);
+      if (c) { c.title = title; c.content = content; c.groupId = editingCard.groupId; }
+    } else {
+      DB.cards.unshift({ id: uid('c_'), title: title, content: content, groupId: editingCard.groupId, disabled: false, createdAt: Date.now() });
+    }
+    saveDB();
+    closeSheets();
+    renderLibrary();
+    renderCardPick();
+    toast('已保存');
+  }
+
+  function deleteCard() {
+    if (!editingCard || !editingCard.id) return;
+    DB.cards = DB.cards.filter(function (c) { return c.id !== editingCard.id; });
+    saveDB();
+    closeSheets();
+    renderLibrary();
+    renderCardPick();
+    toast('已删除');
+  }
+
+  function runDedup() {
+    var seen = {};
+    var before = DB.cards.length;
+    DB.cards = DB.cards.filter(function (c) {
+      var key = (c.content || '').trim();
+      if (!key || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+    var removed = before - DB.cards.length;
+    saveDB();
+    renderLibrary();
+    renderCardPick();
+    toast(removed > 0 ? '已清理 ' + removed + ' 条重复字卡' : '没有重复字卡');
+  }
+
+  function exportCards() {
+    var data = { cards: DB.cards, cardGroups: DB.cardGroups, exportedAt: new Date().toISOString() };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '字卡库_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('已导出 ' + DB.cards.length + ' 条字卡');
+  }
+
+  function importCards(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        var cards = Array.isArray(data) ? data : (data.cards || []);
+        var groups = Array.isArray(data.cardGroups) ? data.cardGroups : [];
+        if (!cards.length) { toast('文件中没有字卡'); return; }
+        var idMap = {};
+        groups.forEach(function (g) {
+          var newId = uid('cg_');
+          idMap[g.id] = newId;
+          DB.cardGroups.push({ id: newId, name: g.name || '导入分组', color: g.color || randomColor(), disabled: !!g.disabled });
+        });
+        var added = 0;
+        cards.forEach(function (c) {
+          if (!c.content) return;
+          DB.cards.unshift({
+            id: uid('c_'),
+            title: c.title || '',
+            content: c.content,
+            groupId: c.groupId && idMap[c.groupId] ? idMap[c.groupId] : null,
+            disabled: !!c.disabled,
+            createdAt: Date.now()
+          });
+          added++;
+        });
+        saveDB();
+        renderLibrary();
+        renderCardPick();
+        toast('已导入 ' + added + ' 条字卡');
+      } catch (e) {
+        toast('导入失败：文件格式错误');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ================= 分组管理 ================= */
+  function openGroupMgr() {
+    renderGroupMgr();
+    openSheet('sheetGroupMgr');
+  }
+
+  function renderGroupMgr() {
+    var box = $('#groupMgrList');
+    if (!DB.cardGroups.length) {
+      box.innerHTML = '<div class="gm-empty">还没有分组<br>点右上角「新建」创建</div>';
+      return;
+    }
+    box.innerHTML = DB.cardGroups.map(function (g) {
+      var count = cardsByGroup(g.id).length;
+      return '<div class="gm-row' + (g.disabled ? ' disabled' : '') + '" data-gid="' + g.id + '">' +
+        '<span class="gm-dot" style="background:' + g.color + '"></span>' +
+        '<span class="gm-name">' + esc(g.name) + '</span>' +
+        '<span class="gm-count">' + count + ' 条</span>' +
+        '<div class="gm-actions">' +
+        '<button data-act="toggle" title="' + (g.disabled ? '启用' : '屏蔽') + '">' + (g.disabled ? '👁' : '🚫') + '</button>' +
+        '<button data-act="edit" title="编辑">' + PENCIL + '</button>' +
+        '<button class="danger" data-act="del" title="删除">🗑</button>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  var editingGroup = null;
+  function openGroupEdit(g) {
+    editingGroup = g ? { id: g.id, name: g.name, color: g.color } : { id: null, name: '', color: randomColor() };
+    $('#groupEditTitle').textContent = g ? '编辑分组' : '新建分组';
+    $('#groupName').value = editingGroup.name;
+    $('#groupDelete').classList.toggle('hidden', !g);
+    renderGroupSwatches();
+    openSheet('sheetGroupEdit');
+    setTimeout(function () { $('#groupName').focus(); }, 280);
+  }
+
+  function renderGroupSwatches() {
+    $('#groupSwatches').innerHTML = GROUP_COLORS.map(function (c) {
+      var active = c === editingGroup.color ? ' active' : '';
+      return '<button class="swatch' + active + '" style="background:' + c + '" data-color="' + c + '" aria-label="颜色"></button>';
+    }).join('');
+  }
+
+  function saveGroup() {
+    var name = $('#groupName').value.trim();
+    if (!name) { toast('请输入分组名称'); $('#groupName').focus(); return; }
+    if (editingGroup.id) {
+      var g = cardGroupById(editingGroup.id);
+      if (g) { g.name = name; g.color = editingGroup.color; }
+    } else {
+      DB.cardGroups.push({ id: uid('cg_'), name: name, color: editingGroup.color, disabled: false });
+    }
+    saveDB();
+    closeSheets();
+    renderGroupMgr();
+    renderLibrary();
+    renderCardPick();
+    toast('已保存');
+  }
+
+  function deleteGroup() {
+    if (!editingGroup || !editingGroup.id) return;
+    var gid = editingGroup.id;
+    DB.cardGroups = DB.cardGroups.filter(function (g) { return g.id !== gid; });
+    DB.cards.forEach(function (c) { if (c.groupId === gid) c.groupId = null; });
+    saveDB();
+    closeSheets();
+    renderGroupMgr();
+    renderLibrary();
+    renderCardPick();
+    toast('分组已删除，字卡保留');
+  }
+
+  function batchSetGroup(gid) {
+    var ids = Object.keys(libSelected);
+    if (!ids.length) return;
+    ids.forEach(function (id) {
+      var c = cardById(id);
+      if (c) c.groupId = gid || null;
+    });
+    saveDB();
+    libSelected = {};
+    renderLibrary();
+    renderCardPick();
+    toast('已更新 ' + ids.length + ' 张字卡的分组');
+  }
+
+  function batchToggleDisable() {
+    var ids = Object.keys(libSelected);
+    if (!ids.length) return;
+    var anyEnabled = ids.some(function (id) { var c = cardById(id); return c && !c.disabled; });
+    ids.forEach(function (id) {
+      var c = cardById(id);
+      if (c) c.disabled = anyEnabled;
+    });
+    saveDB();
+    libSelected = {};
+    renderLibrary();
+    toast(anyEnabled ? '已屏蔽选中字卡' : '已启用选中字卡');
+  }
+
+  function batchDelete() {
+    var ids = Object.keys(libSelected);
+    if (!ids.length) return;
+    if (!confirm('删除选中的 ' + ids.length + ' 张字卡？')) return;
+    DB.cards = DB.cards.filter(function (c) { return !libSelected[c.id]; });
+    libSelected = {};
+    saveDB();
+    renderLibrary();
+    renderCardPick();
+    toast('已删除');
+  }
+
+  /* ================= 事件绑定 ================= */
+  function bindEvents() {
+    /* 顶部 */
+    $('#btnPlus').addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (activeTab === 'contacts') {
+        openFriendsSheet();
+        return;
+      }
+      $('#plusMenu').classList.contains('open') ? closeMenu() : openMenu();
+    });
+    $('#mask').addEventListener('click', closeMenu);
+    $('#btnSearch').addEventListener('click', function () {
+      this.classList.add('active');
+      setTimeout(function () { $('#btnSearch').classList.remove('active'); }, 220);
+    });
+
+    /* 加号菜单 */
+    $('#plusMenu').addEventListener('click', function (e) {
+      var item = e.target.closest('.menu-item');
+      if (!item) return;
+      closeMenu();
+      var action = item.dataset.action;
+      if (action === 'group') openGroupSheet();
+      else if (action === 'friend') openFriendsSheet();
+      else if (action === 'cards') openLibrary(false);
+      else if (action === 'pay') toast('收付款功能待开发');
+    });
+
+    /* 底部 tab */
+    $('#tabbar').addEventListener('click', function (e) {
+      var tab = e.target.closest('.tab');
+      if (tab) switchTab(tab.dataset.tab);
+    });
+
+    /* 弹层关闭 */
+    $('#sheetMask').addEventListener('click', closeSheets);
+    $$('[data-close]').forEach(function (btn) {
+      btn.addEventListener('click', closeSheets);
+    });
+
+    /* 好友列表 */
+    $('#friendList').addEventListener('click', function (e) {
+      var row = e.target.closest('.friend-row');
+      if (row) openFriendEdit(friendById(row.dataset.fid));
+    });
+    $('#friendAddBtn').addEventListener('click', function () { openFriendEdit(null); });
+    $('#friendEditCancel').addEventListener('click', closeSheets);
+    $('#friendSave').addEventListener('click', saveFriend);
+    $('#friendDelete').addEventListener('click', deleteFriend);
+    $('#friendName').addEventListener('input', function () {
+      editingFriend.name = this.value;
+      if (!editingFriend.avatar) renderAvatarEditor();
+    });
+    $('#friendRegion').addEventListener('input', function () {
+      editingFriend.region = this.value;
+    });
+    $('#swatches').addEventListener('click', function (e) {
+      var sw = e.target.closest('.swatch');
+      if (!sw) return;
+      editingFriend.color = sw.dataset.color;
+      editingFriend.avatar = null;
+      renderAvatarEditor();
+    });
+    $('#avatarFile').addEventListener('change', function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+      shrinkImage(file, function (data) {
+        if (data) {
+          editingFriend.avatar = data;
+          renderAvatarEditor();
+        } else {
+          toast('图片处理失败');
+        }
+      });
+      this.value = '';
+    });
+
+    /* 发起群聊 */
+    $('#groupList').addEventListener('click', function (e) {
+      if (e.target.closest('#emptyAddFriend')) {
+        openFriendsSheet();
+        return;
+      }
+      var row = e.target.closest('.pick');
+      if (!row) return;
+      var id = row.dataset.fid;
+      if (selected[id]) {
+        delete selected[id];
+        row.classList.remove('selected');
+      } else {
+        selected[id] = 1;
+        row.classList.add('selected');
+      }
+      $('#groupDone').disabled = !Object.keys(selected).length;
+    });
+    $('#groupDone').addEventListener('click', createGroupFromSelection);
+
+    /* 通讯录 */
+    $('#contactsList').addEventListener('click', function (e) {
+      if (e.target.closest('#newFriendRow')) {
+        openFriendsSheet();
+        return;
+      }
+      var row = e.target.closest('.contact-row');
+      if (row) openProfile(row.dataset.fid);
+    });
+    $('#indexRail').addEventListener('click', function (e) {
+      var s = e.target.closest('span');
+      if (!s) return;
+      var target = document.getElementById('grp-' + s.dataset.letter);
+      if (target) target.scrollIntoView({ block: 'start' });
+    });
+
+    /* 会话列表 / 详情 */
+    $('#chatList').addEventListener('click', function (e) {
+      var cell = e.target.closest('.cell');
+      if (cell) openChat(cell.dataset.gid);
+    });
+    $('#chatBack').addEventListener('click', function () {
+      if (replyTimer) { clearTimeout(replyTimer); replyTimer = null; }
+      hideTyping();
+      closeScreen('pageChatDetail');
+      closePanels();
+      activeGroupId = null;
+    });
+    $('#chatMore').addEventListener('click', openChatSettings);
+    $('#msgInput').addEventListener('input', updateSendState);
+    $('#msgInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendText();
+      }
+    });
+    $('#sendBtn').addEventListener('click', sendText);
+    $('#msgArea').addEventListener('click', function (e) {
+      var av = e.target.closest('.av[data-uid]');
+      if (av) {
+        if (av.dataset.uid === '__me__') openMyProfile();
+        else openProfile(av.dataset.uid);
+        return;
+      }
+      if (e.target.closest('.bubble.voice')) { toast('语音播放（模拟）'); return; }
+      if (!e.target.closest('.msg')) {
+        closePanels();
+        if (document.activeElement === $('#msgInput')) $('#msgInput').blur();
+      }
+    });
+
+    /* 语音 / 表情 / 加号 */
+    $('#voiceToggle').addEventListener('click', function () {
+      setVoiceMode(!voiceMode);
+    });
+    $('#holdTalk').addEventListener(PDOWN, function (e) {
+      e.preventDefault();
+      startRec(e);
+    });
+    document.addEventListener(PUP, function () { stopRec(false); });
+    document.addEventListener(PCANCEL, function () { stopRec(true); });
+    $('#emojiToggle').addEventListener('click', function () {
+      if ($('#emojiPanel').classList.contains('hidden')) openEmojiPanel();
+      else closePanels();
+    });
+    $('#plusToggle').addEventListener('click', function () {
+      if ($('#plusPanel').classList.contains('hidden')) openPlusPanel();
+      else closePanels();
+    });
+    $('#emojiPanel').addEventListener('click', function (e) {
+      var tab = e.target.closest('.panel-tab');
+      if (tab) { switchEmojiTab(tab.dataset.etab); return; }
+      if (e.target.closest('#manageCards')) {
+        if (emojiTab === 'cards') openLibrary(true);
+        else openEmojiMgr();
+        return;
+      }
+      var libChip = e.target.closest('#emojiLibBar .chip');
+      if (libChip) {
+        if (libChip.dataset.egid === '__mgr__') openEmojiMgr();
+        else {
+          emojiGroupId = libChip.dataset.egid;
+          renderEmojiLibBar();
+          renderEmojiGrid();
+        }
+        return;
+      }
+      var filt = e.target.closest('#cardPickFilter .chip');
+      if (filt) {
+        cardPickFilter = filt.dataset.gid === '' ? null : filt.dataset.gid;
+        renderCardPick();
+        return;
+      }
+      var emoImg = e.target.closest('[data-emoji-img]');
+      if (emoImg) {
+        var eg = activeEmojiGroup();
+        var eitem = eg && eg.items[+emoImg.dataset.emojiImg];
+        if (eitem && typeof eitem === 'object') {
+          sendMsg({ type: 'sticker', text: eitem.name, sticker: eitem.src });
+        }
+        return;
+      }
+      var emo = e.target.closest('[data-emoji]');
+      if (emo) { sendMsg({ type: 'sticker', text: emo.dataset.emoji }); return; }
+      var cp = e.target.closest('.card-pick-item');
+      if (cp) {
+        var c = cardById(cp.dataset.cid);
+        if (c) {
+          sendMsg({ type: 'card', title: c.title, text: c.content });
+          closePanels();
+        }
+      }
+    });
+    $('#plusPanel').addEventListener('click', function (e) {
+      var dot = e.target.closest('#plusDots i');
+      if (dot) {
+        setPlusPage($$('#plusDots i').indexOf(dot));
+        return;
+      }
+      var item = e.target.closest('.plus-item');
+      if (item) onPlusAction(item.dataset.plus);
+    });
+    var swipeX = null;
+    $('#plusTrack').addEventListener('touchstart', function (e) {
+      swipeX = e.touches[0].clientX;
+    }, { passive: true });
+    $('#plusTrack').addEventListener('touchend', function (e) {
+      if (swipeX == null) return;
+      var dx = e.changedTouches[0].clientX - swipeX;
+      swipeX = null;
+      if (Math.abs(dx) > 36) setPlusPage(dx < 0 ? 1 : 0);
+    }, { passive: true });
+
+    /* 消息设置 */
+    $('#swPinned').addEventListener('click', function () {
+      var g = groupById(activeGroupId);
+      if (!g) return;
+      g.pinned = !g.pinned;
+      this.classList.toggle('active', g.pinned);
+      saveDB();
+      renderChatList();
+      toast(g.pinned ? '已置顶聊天' : '已取消置顶');
+    });
+    $('#swMuted').addEventListener('click', function () {
+      var g = groupById(activeGroupId);
+      if (!g) return;
+      g.muted = !g.muted;
+      this.classList.toggle('active', g.muted);
+      saveDB();
+      renderChatList();
+      toast(g.muted ? '已开启消息免打扰' : '已关闭消息免打扰');
+    });
+    $('#bgSwatches').addEventListener('click', function (e) {
+      var b = e.target.closest('.bg-swatch');
+      var g = groupById(activeGroupId);
+      if (!b || !g) return;
+      g.bg = b.dataset.bg;
+      saveDB();
+      applyBg(g.bg);
+      $$('#bgSwatches .bg-swatch').forEach(function (x) { x.classList.toggle('active', x === b); });
+      toast('聊天背景已更新');
+    });
+    $('#clearChat').addEventListener('click', function () {
+      var g = groupById(activeGroupId);
+      if (!g) return;
+      if (!g.messages.length) { toast('还没有聊天记录'); return; }
+      if (!confirm('清空当前聊天记录？')) return;
+      g.messages = [];
+      saveDB();
+      renderMessages();
+      renderChatList();
+      closeSheets();
+      toast('已清空');
+    });
+
+    /* 通话 */
+    $('#sheetCallOptions').addEventListener('click', function (e) {
+      var row = e.target.closest('[data-callmode]');
+      if (row) startCall(row.dataset.callmode);
+    });
+    $('#callScreen').addEventListener('click', function (e) {
+      var btn = e.target.closest('.call-btn');
+      if (!btn) return;
+      if (btn.dataset.callbtn === 'hangup') hangupCall();
+      else btn.classList.toggle('active');
+    });
+
+    /* 字卡库 */
+    $('#libraryBack').addEventListener('click', closeLibrary);
+    $('#cardAdd').addEventListener('click', function () { openCardEdit(null); });
+    $('#libSearchBtn').addEventListener('click', function () {
+      var bar = $('#libSearchBar');
+      bar.classList.toggle('hidden');
+      if (!bar.classList.contains('hidden')) setTimeout(function () { $('#libSearchInput').focus(); }, 100);
+      else { libSearch = ''; $('#libSearchInput').value = ''; renderLibrary(); }
+    });
+    $('#libSearchInput').addEventListener('input', function () { libSearch = this.value; renderLibrary(); });
+    $('#libSearchClear').addEventListener('click', function () { libSearch = ''; $('#libSearchInput').value = ''; renderLibrary(); });
+    $('#libBatchBtn').addEventListener('click', toggleBatchMode);
+    $('#libFilterBar').addEventListener('click', function (e) {
+      var chip = e.target.closest('.chip');
+      if (!chip) return;
+      var gid = chip.dataset.gid;
+      if (gid === '') libFilterGroup = null;
+      else if (gid === '__none__') libFilterGroup = '';
+      else libFilterGroup = gid;
+      renderLibrary();
+    });
+    $('#cardList').addEventListener('click', function (e) {
+      if (e.target.closest('#emptyNewCard')) { openCardEdit(null); return; }
+      var row = e.target.closest('.card-row');
+      if (!row) return;
+      var cid = row.dataset.cid;
+      if (libBatchMode) {
+        if (libSelected[cid]) delete libSelected[cid];
+        else libSelected[cid] = true;
+        updateBatchBar();
+        renderLibrary();
+        return;
+      }
+      if (e.target.closest('.row-edit')) { openCardEdit(cardById(cid)); return; }
+      var card = cardById(cid);
+      if (card) copyText(card.content);
+    });
+    $('#libBatchGroup').addEventListener('click', function () {
+      var ids = Object.keys(libSelected);
+      if (!ids.length) { toast('请先选择字卡'); return; }
+      if (!DB.cardGroups.length) { toast('请先创建分组'); openGroupMgr(); return; }
+      var names = DB.cardGroups.map(function (g, i) { return (i + 1) + '. ' + g.name; }).join('\n');
+      var choice = prompt('选择分组（输入序号，0 为取消分组）：\n' + names);
+      if (choice == null) return;
+      var n = parseInt(choice);
+      if (isNaN(n) || n < 0 || n > DB.cardGroups.length) { toast('无效序号'); return; }
+      batchSetGroup(n === 0 ? null : DB.cardGroups[n - 1].id);
+    });
+    $('#libBatchDisable').addEventListener('click', batchToggleDisable);
+    $('#libBatchDelete').addEventListener('click', batchDelete);
+    $('#libGroupMgr').addEventListener('click', openGroupMgr);
+    $('#libDedup').addEventListener('click', runDedup);
+    $('#libExport').addEventListener('click', exportCards);
+    $('#libImport').addEventListener('click', function () { $('#libImportFile').click(); });
+    $('#libImportFile').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (f) importCards(f);
+      this.value = '';
+    });
+    $('#libSettings').addEventListener('click', openAppSettings);
+    $('#cardSave').addEventListener('click', saveCard);
+    $('#cardDelete').addEventListener('click', deleteCard);
+    $('#cardGroupChips').addEventListener('click', function (e) {
+      var chip = e.target.closest('.chip');
+      if (!chip) return;
+      editingCard.groupId = chip.dataset.gid || null;
+      renderCardGroupChips();
+    });
+
+    /* 分组管理 */
+    $('#groupAddBtn').addEventListener('click', function () { openGroupEdit(null); });
+    $('#groupMgrList').addEventListener('click', function (e) {
+      var row = e.target.closest('.gm-row');
+      if (!row) return;
+      var g = cardGroupById(row.dataset.gid);
+      if (!g) return;
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      var act = btn.dataset.act;
+      if (act === 'toggle') { g.disabled = !g.disabled; saveDB(); renderGroupMgr(); renderLibrary(); toast(g.disabled ? '分组已屏蔽' : '分组已启用'); }
+      else if (act === 'edit') { openGroupEdit(g); }
+      else if (act === 'del') {
+        if (confirm('删除分组「' + g.name + '」？（字卡不会被删除）')) {
+          DB.cardGroups = DB.cardGroups.filter(function (x) { return x.id !== g.id; });
+          DB.cards.forEach(function (c) { if (c.groupId === g.id) c.groupId = null; });
+          saveDB(); renderGroupMgr(); renderLibrary(); renderCardPick(); toast('已删除分组');
+        }
+      }
+    });
+    $('#groupSave').addEventListener('click', saveGroup);
+    $('#groupDelete').addEventListener('click', deleteGroup);
+    $('#groupSwatches').addEventListener('click', function (e) {
+      var sw = e.target.closest('.swatch');
+      if (!sw) return;
+      editingGroup.color = sw.dataset.color;
+      renderGroupSwatches();
+    });
+    $('#groupName').addEventListener('input', function () { editingGroup.name = this.value; });
+
+    /* 表情库管理 */
+    $('#emojiGroupAddBtn').addEventListener('click', function () { openEmojiEdit(null); });
+    $('#emojiMgrList').addEventListener('click', function (e) {
+      var row = e.target.closest('.emoji-mgr-row');
+      if (row) openEmojiEdit(emojiGroupById(row.dataset.egid));
+    });
+    $('#emojiGroupSave').addEventListener('click', saveEmojiGroup);
+    $('#emojiGroupDelete').addEventListener('click', deleteEmojiGroup);
+    $('#emojiImportFile').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (f) importEmojiFile(f);
+      this.value = '';
+    });
+    $('#emojiImgFile').addEventListener('change', function () {
+      importEmojiImages(this.files);
+      this.value = '';
+    });
+    $('#emojiImgList').addEventListener('input', function (e) {
+      var inp = e.target.closest('.emoji-img-name');
+      if (!inp) return;
+      var it = editingEmojiImages[+inp.dataset.idx];
+      if (it) it.name = inp.value;
+    });
+    $('#emojiImgList').addEventListener('click', function (e) {
+      var del = e.target.closest('.emoji-img-del');
+      if (!del) return;
+      editingEmojiImages.splice(+del.dataset.idx, 1);
+      renderEmojiImgList();
+    });
+
+    /* 全局设置 */
+    $('#swTyping').addEventListener('click', function () {
+      DB.settings.typingIndicatorEnabled = !DB.settings.typingIndicatorEnabled;
+      this.classList.toggle('active', DB.settings.typingIndicatorEnabled);
+      saveDB();
+    });
+    $('#delayMin').addEventListener('change', function () {
+      var v = parseInt(this.value) || 0;
+      DB.settings.replyDelayMin = Math.max(0, v);
+      if (DB.settings.replyDelayMin > DB.settings.replyDelayMax) DB.settings.replyDelayMax = DB.settings.replyDelayMin;
+      saveDB();
+    });
+    $('#delayMax').addEventListener('change', function () {
+      var v = parseInt(this.value) || 0;
+      DB.settings.replyDelayMax = Math.max(DB.settings.replyDelayMin, v);
+      this.value = DB.settings.replyDelayMax;
+      saveDB();
+    });
+    $$('.delay-presets button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var parts = this.dataset.preset.split(',');
+        DB.settings.replyDelayMin = parseInt(parts[0]);
+        DB.settings.replyDelayMax = parseInt(parts[1]);
+        $('#delayMin').value = DB.settings.replyDelayMin;
+        $('#delayMax').value = DB.settings.replyDelayMax;
+        saveDB();
+        toast('已应用');
+      });
+    });
+
+    /* 自动回复开关 */
+    $('#swAutoReply').addEventListener('click', function () {
+      var g = groupById(activeGroupId);
+      if (!g || g.memberIds.length !== 1) return;
+      var f = friendById(g.memberIds[0]);
+      if (!f) return;
+      f.autoReply = !f.autoReply;
+      this.classList.toggle('active', f.autoReply);
+      saveDB();
+      toast(f.autoReply ? '已开启自动回复' : '已关闭自动回复');
+    });
+
+    /* 好友资料 */
+    $('#profileBack').addEventListener('click', function () { closeScreen('pageProfile'); });
+    $('#profileEdit').addEventListener('click', function () {
+      if (profileIsMe) openMyEdit();
+      else openFriendEdit(friendById(activeFriendId));
+    });
+    $('#profileMore').addEventListener('click', function () { toast('更多功能待开发'); });
+    $('#profileAvatar').addEventListener('click', function () { $('#profileAvatarFile').click(); });
+    $('#profileAvatarFile').addEventListener('change', function () {
+      var file = this.files && this.files[0];
+      if (!file) return;
+      shrinkImage(file, function (data) {
+        if (!data) { toast('图片处理失败'); return; }
+        if (profileIsMe) {
+          DB.me.avatar = data;
+          saveDB();
+          renderProfile();
+          renderMessages();
+          toast('头像已更新');
+          return;
+        }
+        var f = friendById(activeFriendId);
+        if (!f) { toast('图片处理失败'); return; }
+        f.avatar = data;
+        saveDB();
+        renderProfile();
+        renderContacts();
+        renderChatList();
+        toast('头像已更新');
+      });
+      this.value = '';
+    });
+    $('#profileRegionRow').addEventListener('click', openRegionSheet);
+    $('#regionSave').addEventListener('click', saveRegion);
+    $('#profileChat').addEventListener('click', function () {
+      if (profileIsMe) return;
+      var gid = findOrCreateSingle(activeFriendId);
+      closeScreen('pageProfile');
+      renderChatList();
+      openChat(gid);
+    });
+    $('#profileCall').addEventListener('click', function () {
+      if (profileIsMe) return;
+      var gid = findOrCreateSingle(activeFriendId);
+      renderChatList();
+      openCallOptions(gid);
+    });
+  }
+
+  /* ================= 启动 ================= */
+  function initSplash() {
+    var splash = $('#splash');
+    setTimeout(function () {
+      splash.classList.add('hide');
+      setTimeout(function () { splash.remove(); }, 360);
+    }, 2000);
+  }
+
+  function fitPhone() {
+    var phone = $('#phone');
+    if (window.innerWidth <= 520) {
+      phone.style.transform = '';
+      return;
+    }
+    var scale = Math.min(1, (window.innerHeight - 24) / 844, (window.innerWidth - 24) / 390);
+    phone.style.transform = 'scale(' + scale + ')';
+    phone.style.transformOrigin = 'center center';
+  }
+
+  function init() {
+    $('#batteryNum').textContent = Math.round(72 + Math.random() * 18);
+    clockLoop();
+    renderChatList();
+    renderContacts();
+    bindEvents();
+    fitPhone();
+    window.addEventListener('resize', fitPhone);
+    initSplash();
+    tickStatuses();
+  }
+
+  init();
+})();
+
+</script>
+</body>
+</html>

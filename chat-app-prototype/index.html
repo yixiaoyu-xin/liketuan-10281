@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EDEDED">
+<title>聊天</title>
+<link rel="stylesheet" href="css/style.css?v=20261028m2">
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="screen" id="screen">
+
+    <!-- 状态栏 -->
+    <div class="statusbar">
+      <div class="sb-left"><span class="sb-clock" id="sbClock">00:00</span></div>
+      <div class="sb-right">
+        <span class="num">5G</span>
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="#000"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="6" width="3" height="6" rx="1"/><rect x="10" y="3.6" width="3" height="8.4" rx="1"/><rect x="15" y="1" width="3" height="11" rx="1"/></svg>
+        <span class="num" id="batteryNum">77</span>
+        <svg width="27" height="13" viewBox="0 0 27 13"><rect x="0.7" y="0.7" width="22.4" height="11.6" rx="3.4" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1.2"/><rect x="2.6" y="2.6" width="18.6" height="7.8" rx="2" fill="#000"/><path d="M24.6 4.4v4.2c.9-.3 1.5-1.1 1.5-2.1s-.6-1.8-1.5-2.1z" fill="#000" fill-opacity=".4"/></svg>
+      </div>
+    </div>
+
+    <!-- 标题栏 -->
+    <div class="header">
+      <div class="title live" id="title">00:00</div>
+      <div class="header-actions" id="headerActions">
+        <button class="icon-btn" id="btnSearch" aria-label="搜索">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.6" cy="10.6" r="6.3"/><path d="M15.4 15.4 20 20"/></svg>
+        </button>
+        <button class="icon-btn" id="btnPlus" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10.2"/><path d="M12 7v10M7 12h10" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 内容区 -->
+    <div class="content" id="content">
+      <section class="page active" id="page-chat">
+        <div class="list" id="chatList"></div>
+      </section>
+      <section class="page" id="page-contacts">
+        <div class="contacts-list" id="contactsList"></div>
+        <div class="index-rail" id="indexRail"></div>
+      </section>
+      <section class="page" id="page-other">
+        <div class="empty-tip" id="otherTip">页面待实现</div>
+      </section>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="tabbar" id="tabbar">
+      <button class="tab active" data-tab="chat">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="currentColor"><path d="M12.3 4.1c-4.9 0-8.9 3.3-8.9 7.4 0 2.3 1.4 4.4 3.7 5.7l-.9 2.9 3.3-1.7c.7.2 1.5.3 2.3.3h.5c-.2-.6-.3-1.3-.3-1.9 0-4.1 3.7-7.3 8.4-7.3.3 0 .6 0 .9.1-1.2-3.1-4.6-5.5-9-5.5zm-2.9 4.1a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3zm6.1 0a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3z"/><path d="M19.4 10.6c-4.1 0-7.4 2.8-7.4 6.2s3.3 6.2 7.4 6.2c.7 0 1.4-.1 2.1-.3l2.7 1.4-.7-2.4c1.8-1.1 3-3 3-4.9 0-3.4-3.3-6.2-7.1-6.2zm-2.6 3.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5.2 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>
+        </span>
+        <span>聊天</span>
+      </button>
+      <button class="tab" data-tab="contacts">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10.1" cy="9.7" r="3.9"/><path d="M3.6 21.5c.5-3.8 3.2-6.2 6.5-6.2s6 2.4 6.5 6.2"/><path d="M20.1 9.1h4.7M20.1 13.5h4.7M20.1 17.9h4.7"/></svg>
+        </span>
+        <span>通讯录</span>
+      </button>
+      <button class="tab" data-tab="discover">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.55"><circle cx="14" cy="14" r="9.5"/><path d="M17.9 10.1l-2.2 5.6-5.6 2.2 2.2-5.6z" stroke-linejoin="round"/></svg>
+          <i class="dot"></i>
+        </span>
+        <span>发现</span>
+      </button>
+      <button class="tab" data-tab="me">
+        <span class="tab-ico">
+          <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="14" cy="9.5" r="4.2"/><path d="M5.8 23.6c.6-4.4 4-7.3 8.2-7.3s7.6 2.9 8.2 7.3"/></svg>
+        </span>
+        <span>我</span>
+      </button>
+    </div>
+    <div class="home-indicator"><i></i></div>
+
+    <!-- 加号菜单 -->
+    <div class="mask" id="mask"></div>
+    <div class="menu" id="plusMenu">
+      <button class="menu-item" data-action="group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"><path d="M4.2 4.3h15.6c.9 0 1.6.7 1.6 1.6v9.2c0 .9-.7 1.6-1.6 1.6h-5.9l-3.8 3.5v-3.5H4.2c-.9 0-1.6-.7-1.6-1.6V5.9c0-.9.7-1.6 1.6-1.6z"/><circle cx="8.6" cy="10.5" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="10.5" r=".95" fill="currentColor" stroke="none"/><circle cx="15.4" cy="10.5" r=".95" fill="currentColor" stroke="none"/></svg>
+        <span>发起群聊</span>
+      </button>
+      <button class="menu-item" data-action="friend">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"><circle cx="9.6" cy="8.7" r="3.7"/><path d="M3.2 19.6c.5-3.4 3.1-5.6 6.4-5.6 1 0 1.9.2 2.7.7"/><path d="M18.2 12.6v6.2M15.1 15.7h6.2"/></svg>
+        <span>添加朋友</span>
+      </button>
+      <button class="menu-item" data-action="cards">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="7.2" y="3.2" width="13.4" height="14.4" rx="2.2"/><path d="M4.4 7.6v11.2c0 1.7 1 2.7 2.7 2.7h8.4"/></svg>
+        <span>字卡库</span>
+      </button>
+      <button class="menu-item" data-action="pay">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"><rect x="3.4" y="3.4" width="6.2" height="6.2" rx="1.2"/><rect x="14.4" y="3.4" width="6.2" height="6.2" rx="1.2"/><rect x="3.4" y="14.4" width="6.2" height="6.2" rx="1.2"/><path d="M14.4 14.4h2.9v2.9M20.6 14.4v6.2h-3.3" stroke-linecap="round"/></svg>
+        <span>收付款</span>
+      </button>
+    </div>
+
+    <div class="sheet-mask" id="sheetMask"></div>
+
+    <!-- 发起群聊 -->
+    <div class="sheet" id="sheetGroup" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">发起群聊</div>
+        <button class="link" id="groupDone" disabled>完成</button>
+      </div>
+      <div class="sheet-body" id="groupList"></div>
+    </div>
+
+    <!-- 好友列表 -->
+    <div class="sheet" id="sheetFriends" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">好友</div>
+        <button class="link" id="friendAddBtn">添加</button>
+      </div>
+      <div class="sheet-body" id="friendList"></div>
+    </div>
+
+    <!-- 添加 / 编辑好友 -->
+    <div class="sheet" id="sheetFriendEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" id="friendEditCancel">取消</button>
+        <div class="sheet-title" id="friendEditTitle">添加好友</div>
+        <button class="link" id="friendSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <div class="avatar-edit">
+            <div class="avatar-preview" id="avatarPreview"></div>
+            <div class="avatar-tools">
+              <div class="avatar-label">头像（点击更换图片）</div>
+              <label class="upload-btn">从相册选择<input type="file" id="avatarFile" accept="image/*" hidden></label>
+              <div class="swatches" id="swatches"></div>
+            </div>
+          </div>
+          <label class="field">
+            <span>昵称</span>
+            <input id="friendName" maxlength="12" placeholder="请输入好友昵称">
+          </label>
+          <label class="field">
+            <span>地区</span>
+            <input id="friendRegion" maxlength="20" placeholder="例如：浙江 杭州">
+          </label>
+          <button class="danger-btn hidden" id="friendDelete">删除好友</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 修改地区 -->
+    <div class="sheet" id="sheetRegion" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">地区</div>
+        <button class="link" id="regionSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <label class="field">
+            <span>地区</span>
+            <input id="regionInput" maxlength="20" placeholder="例如：浙江 杭州">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建 / 编辑字卡 -->
+    <div class="sheet" id="sheetCardEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title" id="cardEditTitle">新建字卡</div>
+        <button class="link" id="cardSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="card-edit">
+          <input class="card-title-input" id="cardTitle" maxlength="20" placeholder="标题（可不填）">
+          <textarea class="card-textarea" id="cardContent" placeholder="写点想说的话…"></textarea>
+          <div class="card-group-pick">
+            <span class="cg-label">分组</span>
+            <div class="cg-chips" id="cardGroupChips"></div>
+          </div>
+          <button class="danger-btn hidden" id="cardDelete">删除字卡</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 聊天消息设置 -->
+    <div class="sheet" id="sheetChatSettings" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">消息设置</div>
+        <span class="link placeholder-link"></span>
+      </div>
+      <div class="sheet-body">
+        <div class="setting-row"><span>置顶聊天</span><button class="switch" id="swPinned" aria-label="置顶聊天"></button></div>
+        <div class="setting-row"><span>消息免打扰</span><button class="switch" id="swMuted" aria-label="消息免打扰"></button></div>
+        <div class="setting-row auto-reply-row hidden" id="autoReplyRow"><span>自动回复</span><button class="switch" id="swAutoReply" aria-label="自动回复"></button></div>
+        <div class="setting-block">
+          <div class="setting-label">聊天背景</div>
+          <div class="bg-swatches" id="bgSwatches">
+            <button class="bg-swatch bg-gray active" data-bg="gray" aria-label="浅灰"></button>
+            <button class="bg-swatch bg-white" data-bg="white" aria-label="白色"></button>
+            <button class="bg-swatch bg-warm" data-bg="warm" aria-label="暖色"></button>
+          </div>
+        </div>
+        <button class="danger-row" id="clearChat">清空聊天记录</button>
+      </div>
+    </div>
+
+    <!-- 音视频通话选择 -->
+    <div class="sheet" id="sheetCallOptions" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">音视频通话</div>
+        <span class="link placeholder-link"></span>
+      </div>
+      <div class="sheet-body">
+        <button class="option-row" data-callmode="voice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 3.8h3.3l1.5 4.2-2 1.6a12.4 12.4 0 0 0 6.4 6.4l1.6-2 4.2 1.5v3.3c0 1-.8 1.8-1.8 1.8C10.6 20.2 3.8 13.4 3.8 5.6c0-1 .8-1.8 1.4-1.8z"/></svg>
+          <span>语音通话</span>
+        </button>
+        <button class="option-row" data-callmode="video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2.8" y="6.4" width="12.6" height="11.2" rx="2.2"/><path d="M15.4 11l5.8-3.4v8.8L15.4 13z"/></svg>
+          <span>视频通话</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 字卡库 -->
+    <div class="screen-page" id="pageLibrary" aria-hidden="true">
+      <div class="detail-head">
+        <button class="detail-back" id="libraryBack" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5 8 12l7.5 7.5"/></svg>
+        </button>
+        <div class="detail-title"><span>字卡库</span></div>
+        <div class="lib-head-actions">
+          <button class="detail-back" id="libSearchBtn" aria-label="搜索">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="10.6" cy="10.6" r="6.3"/><path d="M15.4 15.4 20 20"/></svg>
+          </button>
+          <button class="detail-back" id="libBatchBtn" aria-label="批量">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5" opacity=".5"/><rect x="3" y="13" width="8" height="8" rx="1.5" opacity=".5"/><rect x="13" y="13" width="8" height="8" rx="1.5" opacity=".3"/></svg>
+          </button>
+          <button class="detail-back" id="cardAdd" aria-label="新建字卡">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="lib-search hidden" id="libSearchBar">
+        <input id="libSearchInput" placeholder="搜索字卡标题或内容">
+        <button class="lib-search-clear" id="libSearchClear" aria-label="清除">×</button>
+      </div>
+      <div class="lib-filter" id="libFilterBar"></div>
+      <div class="library-body" id="cardList"></div>
+      <div class="lib-batch-bar hidden" id="libBatchBar">
+        <span class="lib-batch-count">已选 0 项</span>
+        <div class="lib-batch-actions">
+          <button id="libBatchGroup">分组</button>
+          <button id="libBatchDisable">屏蔽</button>
+          <button id="libBatchDelete" class="danger">删除</button>
+        </div>
+      </div>
+      <div class="lib-tools">
+        <button id="libGroupMgr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 6a1.5 1.5 0 0 1 1.5-1.5h4l1.8 1.8H20a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 18z"/></svg>分组管理</button>
+        <button id="libDedup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 6h16M7 10h10M10 14h4"/></svg>一键去重</button>
+        <button id="libExport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>导出</button>
+        <button id="libImport"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V8M7 13l5-5 5 5"/><path d="M4 4h16"/></svg>导入</button>
+        <button id="libSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>设置</button>
+      </div>
+      <input type="file" id="libImportFile" accept=".json" hidden>
+    </div>
+
+    <!-- 好友资料 -->
+    <div class="screen-page" id="pageProfile" aria-hidden="true">
+      <div class="detail-head profile-head">
+        <button class="detail-back" id="profileBack" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5 8 12l7.5 7.5"/></svg>
+        </button>
+        <div class="detail-title"></div>
+        <div class="profile-head-actions">
+          <button class="detail-back" id="profileEdit" aria-label="编辑">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg>
+          </button>
+          <button class="detail-back" id="profileMore" aria-label="更多">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="profile-scroll">
+        <div class="profile-main">
+          <button class="profile-av" id="profileAvatar" aria-label="更换头像"></button>
+          <div class="profile-info">
+            <div class="profile-name" id="profileName"></div>
+            <button class="profile-region" id="profileRegionRow">地区：<span id="profileRegion">未设置</span></button>
+          </div>
+        </div>
+        <input type="file" id="profileAvatarFile" accept="image/*" hidden>
+        <div class="profile-card">
+          <div class="ps-row"><span>朋友资料</span><span class="chev">›</span></div>
+          <div class="ps-row"><span>标签</span><span class="ps-value">朋友</span></div>
+        </div>
+        <div class="profile-card">
+          <div class="ps-row"><span>朋友圈</span><span class="chev">›</span></div>
+          <div class="moments-strip"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="profile-card">
+          <div class="ps-row"><span>视频号</span><span class="chev">›</span></div>
+          <div class="video-mini"><span></span></div>
+        </div>
+        <div class="profile-btns">
+          <button id="profileChat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M20.5 4.5H3.5c-.6 0-1 .4-1 1v9c0 .6.4 1 1 1h6.7l3.6 3.4v-3.4h6.7c.6 0 1-.4 1-1v-9c0-.6-.4-1-1-1z"/></svg>
+            发消息
+          </button>
+          <button id="profileCall">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.2 3.8h3.3l1.5 4.2-2 1.6a12.4 12.4 0 0 0 6.4 6.4l1.6-2 4.2 1.5v3.3c0 1-.8 1.8-1.8 1.8C10.6 20.2 3.8 13.4 3.8 5.6c0-1 .8-1.8 1.4-1.8z"/></svg>
+            音视频通话
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 会话详情 -->
+    <div class="screen-page" id="pageChatDetail" aria-hidden="true">
+      <div class="detail-head">
+        <button class="detail-back" id="chatBack" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 4.5 8 12l7.5 7.5"/></svg>
+        </button>
+        <div class="detail-title"><span id="chatTitle"></span><span class="detail-count" id="chatCount"></span><span class="chat-status hidden" id="chatStatus"></span></div>
+        <button class="detail-back" id="chatMore" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        </button>
+      </div>
+      <div class="msg-area bg-gray" id="msgArea"></div>
+      <div class="composer">
+        <button class="comp-btn" id="voiceToggle" aria-label="语音">
+          <span class="ico-voice" id="icoVoice">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round"><circle cx="12" cy="12" r="9.4"/><path d="M8.3 9.8v4.4M11.4 7.6v8.8M14.6 9.2v5.6M17.6 10.6v2.8"/></svg>
+          </span>
+          <span class="ico-keyboard hidden" id="icoKeyboard">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="6.5" width="18.4" height="11" rx="2.4"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7 13.6h10"/></svg>
+          </span>
+        </button>
+        <div class="comp-field">
+          <input class="msg-input" id="msgInput" placeholder="">
+          <span class="comp-mic" id="compMic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9.6" y="3.6" width="4.8" height="9" rx="2.4"/><path d="M6.6 11.4a5.4 5.4 0 0 0 10.8 0M12 16.8V19M9.4 21h5.2"/></svg>
+          </span>
+          <button class="hold-talk hidden" id="holdTalk">按住 说话</button>
+          <button class="send-inline hidden" id="sendBtn">发送</button>
+        </div>
+        <button class="comp-btn" id="emojiToggle" aria-label="表情">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9.4"/><path d="M8.6 14.2a4.3 4.3 0 0 0 6.8 0" stroke-linecap="round"/><circle cx="9" cy="9.6" r=".95" fill="currentColor" stroke="none"/><circle cx="15" cy="9.6" r=".95" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button class="comp-btn" id="plusToggle" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9.6"/><path d="M12 7.6v8.8M7.6 12h8.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <!-- 表情 / 字卡面板 -->
+      <div class="chat-panel hidden" id="emojiPanel">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-etab="emoji">表情</button>
+          <button class="panel-tab" data-etab="cards">字卡</button>
+          <button class="panel-manage" id="manageCards">管理</button>
+        </div>
+        <div class="emoji-lib-bar" id="emojiLibBar"></div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+        <div class="card-pick hidden" id="cardPick">
+          <div class="card-pick-filter" id="cardPickFilter"></div>
+          <div class="card-pick-list" id="cardPickList"></div>
+        </div>
+      </div>
+
+      <!-- 加号功能面板：两页可滑动 -->
+      <div class="chat-panel plus-panel hidden" id="plusPanel">
+        <div class="plus-track" id="plusTrack">
+          <div class="plus-page">
+            <button class="plus-item" data-plus="album"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="3.4" y="4.6" width="17.2" height="14.8" rx="2.2"/><circle cx="8.7" cy="9.6" r="1.6"/><path d="M4.4 16.6l4.6-4.6 3.6 3.6 2.5-2.5 4.5 4.5"/></svg></span><span>相册</span></button>
+            <button class="plus-item" data-plus="camera"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M4 8.6h3.2l1.4-2.2h6.8l1.4 2.2H20v9H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span><span>拍摄</span></button>
+            <button class="plus-item" data-plus="video"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="2.8" y="6.4" width="12.6" height="11.2" rx="2.2"/><path d="M15.4 11l5.8-3.4v8.8L15.4 13z"/></svg></span><span>视频通话</span></button>
+            <button class="plus-item" data-plus="location"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span>位置</span></button>
+            <button class="plus-item" data-plus="redpacket"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><path d="M4 8.6h16"/></svg></span><span>红包</span></button>
+            <button class="plus-item" data-plus="gift"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><rect x="4" y="9.4" width="16" height="10.4" rx="1.6"/><path d="M3.2 6h17.6v3.4H3.2zM12 6v13.8M12 6c-2.8 0-4.4-.9-4.4-2.2S8.9 1.4 9.9 2.2C10.9 3 12 6 12 6zM12 6c2.8 0 4.4-.9 4.4-2.2S15.1 1.4 14.1 2.2C13.1 3 12 6 12 6z"/></svg></span><span>礼物</span></button>
+            <button class="plus-item" data-plus="transfer"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13M13 5l4 4-4 4"/><path d="M20 15H7M11 19l-4-4 4-4"/></svg></span><span>转账</span></button>
+            <button class="plus-item" data-plus="voiceinput"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"><rect x="9.6" y="3.6" width="4.8" height="9" rx="2.4"/><path d="M6.6 11.4a5.4 5.4 0 0 0 10.8 0M12 16.8V19M9.4 21h5.2"/></svg></span><span>语音输入</span></button>
+          </div>
+          <div class="plus-page">
+            <button class="plus-item" data-plus="favorite"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3.2 20 7.5v9L12 20.8 4 16.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v8.8"/></svg></span><span>收藏</span></button>
+            <button class="plus-item" data-plus="contact"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20c.5-4 3.6-6.4 7.2-6.4s6.7 2.4 7.2 6.4"/></svg></span><span>个人名片</span></button>
+            <button class="plus-item" data-plus="file"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 6.5h6l2 2h9v11h-17z"/></svg></span><span>文件</span></button>
+            <button class="plus-item" data-plus="music"><span class="plus-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 18V6.5l9-2v11.5"/><ellipse cx="7" cy="18.4" rx="2.6" ry="2.2"/><ellipse cx="16" cy="15.9" rx="2.6" ry="2.2"/></svg></span><span>音乐</span></button>
+          </div>
+        </div>
+        <div class="plus-dots" id="plusDots"><i class="active"></i><i></i></div>
+      </div>
+
+      <!-- 录音提示 -->
+      <div class="rec-overlay hidden" id="recOverlay">
+        <div class="rec-box">
+          <div class="rec-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="rec-time" id="recTime">0:00</div>
+          <div class="rec-tip">松开发送</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 音视频通话 -->
+    <div class="call-screen" id="callScreen" aria-hidden="true">
+      <div class="call-bg"></div>
+      <div class="call-top">
+        <div class="call-avatar" id="callAvatar"></div>
+        <div class="call-name" id="callName"></div>
+        <div class="call-status" id="callStatus">正在呼叫…</div>
+      </div>
+      <div class="call-self"><span>我的画面</span></div>
+      <div class="call-controls">
+        <button class="call-btn" data-callbtn="mute">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><rect x="9.4" y="3.4" width="5.2" height="9.6" rx="2.6"/><path d="M6.4 11.6a5.6 5.6 0 0 0 11.2 0M12 17.2V20M9.2 21.4h5.6"/><path d="M4 3.2 20 20.8" stroke-width="1.9"/></svg></span>
+          <span>静音</span>
+        </button>
+        <button class="call-btn" data-callbtn="speaker">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.4h3.4L12.4 5v14L7.4 14.6H4z"/><path d="M15.6 9.2a4 4 0 0 1 0 5.6M18 6.8a7.4 7.4 0 0 1 0 10.4"/></svg></span>
+          <span>免提</span>
+        </button>
+        <button class="call-btn" data-callbtn="flip">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.6h10.6a5.4 5.4 0 0 1 0 10.8H9"/><path d="M7.2 5.6 4 8.6l3.2 3M9 16.4 6.2 19.4 9 22.4"/></svg></span>
+          <span>翻转</span>
+        </button>
+        <button class="call-btn hangup" data-callbtn="hangup">
+          <span class="call-circle"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 9.2c-2.4 0-4.7.4-6.8 1.2-.7.3-1.1.9-1.1 1.7v1.5c0 .6.4 1 1 1h2.2c.5 0 .9-.3 1-.8l.4-1.5c1-.2 2.1-.3 3.3-.3s2.3.1 3.3.3l.4 1.5c.1.5.5.8 1 .8h2.2c.6 0 1-.4 1-1v-1.5c0-.8-.4-1.4-1.1-1.7-2.1-.8-4.4-1.2-6.8-1.2z"/></svg></span>
+          <span>挂断</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 分组管理 -->
+    <div class="sheet" id="sheetGroupMgr" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">分组管理</div>
+        <button class="link" id="groupAddBtn">新建</button>
+      </div>
+      <div class="sheet-body" id="groupMgrList"></div>
+    </div>
+
+    <!-- 分组编辑 -->
+    <div class="sheet" id="sheetGroupEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title" id="groupEditTitle">新建分组</div>
+        <button class="link" id="groupSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <label class="field">
+            <span>分组名称</span>
+            <input id="groupName" maxlength="12" placeholder="例如：日常问候">
+          </label>
+          <div class="field">
+            <span>颜色</span>
+            <div class="swatches" id="groupSwatches"></div>
+          </div>
+          <button class="danger-btn hidden" id="groupDelete">删除分组</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全局设置 -->
+    <div class="sheet" id="sheetAppSettings" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">字卡与回复设置</div>
+        <span class="link placeholder-link"></span>
+      </div>
+      <div class="sheet-body">
+        <div class="setting-row"><span>显示「正在输入」</span><button class="switch" id="swTyping" aria-label="正在输入提示"></button></div>
+        <div class="setting-block">
+          <div class="setting-label">回复延迟（毫秒）</div>
+          <div class="delay-row">
+            <div class="delay-field"><label>最短</label><input type="number" id="delayMin" min="0" max="60000" step="500"></div>
+            <span class="delay-sep">~</span>
+            <div class="delay-field"><label>最长</label><input type="number" id="delayMax" min="0" max="60000" step="500"></div>
+          </div>
+          <div class="delay-presets">
+            <button data-preset="1000,3000">快</button>
+            <button data-preset="3000,7000">正常</button>
+            <button data-preset="6000,12000">慢</button>
+          </div>
+        </div>
+        <div class="setting-block">
+          <div class="setting-label">关于</div>
+          <div class="setting-desc">回复池 = 所有未屏蔽的字卡（被禁用分组中的字卡不参与自动回复）。每条回复从池中随机抽取。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表情库管理 -->
+    <div class="sheet" id="sheetEmojiMgr" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title">表情库</div>
+        <button class="link" id="emojiGroupAddBtn">新建</button>
+      </div>
+      <div class="sheet-body" id="emojiMgrList"></div>
+    </div>
+
+    <!-- 表情库编辑 -->
+    <div class="sheet" id="sheetEmojiEdit" aria-hidden="true">
+      <div class="sheet-head">
+        <button class="link muted" data-close>取消</button>
+        <div class="sheet-title" id="emojiGroupTitle">新建表情库</div>
+        <button class="link" id="emojiGroupSave">保存</button>
+      </div>
+      <div class="sheet-body">
+        <div class="friend-edit">
+          <label class="field">
+            <span>名称</span>
+            <input id="emojiGroupName" maxlength="12" placeholder="例如：常用表情">
+          </label>
+          <div class="setting-block">
+            <div class="setting-label">文字表情（一行一个）</div>
+            <textarea class="card-textarea emoji-textarea" id="emojiItems" placeholder="😀&#10;😂&#10;自定义表情文字…"></textarea>
+            <div class="emoji-import-row">
+              <label class="upload-btn">从文件导入（.txt / .json）<input type="file" id="emojiImportFile" accept=".txt,.json,text/plain,application/json" hidden></label>
+            </div>
+          </div>
+          <div class="setting-block">
+            <div class="setting-label">图片表情（可逐张命名）</div>
+            <div class="emoji-img-list" id="emojiImgList"></div>
+            <div class="emoji-import-row">
+              <label class="upload-btn">导入图片（可多选）<input type="file" id="emojiImgFile" accept="image/*" multiple hidden></label>
+            </div>
+          </div>
+          <button class="danger-btn hidden" id="emojiGroupDelete">删除表情库</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- 开场动画 -->
+    <div class="splash" id="splash">
+      <div class="splash-text">开场动画</div>
+      <div class="splash-hint">SPLASH</div>
+    </div>
+
+  </div>
+</div>
+<script src="js/app.js?v=20261028m2"></script>
+</body>
+</html>
